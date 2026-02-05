@@ -148,32 +148,44 @@ class _AppDrawerState extends State<AppDrawer> {
                       DrawerSubMenuItem(
                         icon: Icons.list_alt,
                         title: 'All Leads',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pushNamed(context, '/all_leads');
+                        },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.history,
                         title: 'Lead History',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pushNamed(context, '/lead_history');
+                        },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.show_chart,
                         title: 'Lead Status',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pushNamed(context, '/leads_status');
+                        },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.send,
                         title: 'Lead Source',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pushNamed(context, '/leads_source');
+                        },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.description_outlined,
                         title: 'Lead Form Name',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pushNamed(context, '/leads_form_name');
+                        },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.public,
                         title: 'Lead Country',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pushNamed(context, '/leads_country');
+                        },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.cloud_upload_outlined,
