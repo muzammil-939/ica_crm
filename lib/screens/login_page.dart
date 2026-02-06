@@ -269,7 +269,10 @@ class _LoginPageState extends State<LoginPage> {
                           height: isSmallScreen ? 52 : (isTablet ? 64 : 60),
                           child: ElevatedButton(
                             onPressed: () {
-                              Navigator.pushNamed(context, '/dashboard');
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/dashboard',
+                              );
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.teal[800],

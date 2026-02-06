@@ -76,7 +76,8 @@ class _AppDrawerState extends State<AppDrawer> {
                     icon: Icons.dashboard_outlined,
                     title: 'Dashboard',
                     onTap: () {
-                      Navigator.pushNamed(context, '/dashboard');
+                      Navigator.pop(context);
+                      Navigator.pushReplacementNamed(context, '/dashboard');
                     },
                   ),
 
@@ -87,7 +88,8 @@ class _AppDrawerState extends State<AppDrawer> {
                     icon: Icons.people_outline,
                     title: 'Users',
                     onTap: () {
-                      Navigator.pushNamed(context, '/users');
+                      Navigator.pop(context);
+                      Navigator.pushReplacementNamed(context, '/users');
                     },
                   ),
 
@@ -98,7 +100,8 @@ class _AppDrawerState extends State<AppDrawer> {
                     icon: Icons.business_outlined,
                     title: 'Departments',
                     onTap: () {
-                      Navigator.pushNamed(context, '/departments');
+                      Navigator.pop(context);
+                      Navigator.pushReplacementNamed(context, '/departments');
                     },
                   ),
 
@@ -119,14 +122,19 @@ class _AppDrawerState extends State<AppDrawer> {
                         icon: Icons.person_outline,
                         title: 'Roles',
                         onTap: () {
-                          Navigator.pushNamed(context, '/roles');
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(context, '/roles');
                         },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.verified_user_outlined,
                         title: 'Permissions',
                         onTap: () {
-                          Navigator.pushNamed(context, '/permissions');
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/permissions',
+                          );
                         },
                       ),
                     ],
@@ -149,73 +157,130 @@ class _AppDrawerState extends State<AppDrawer> {
                         icon: Icons.list_alt,
                         title: 'All Leads',
                         onTap: () {
-                          Navigator.pushNamed(context, '/all_leads');
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(context, '/all_leads');
                         },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.history,
                         title: 'Lead History',
                         onTap: () {
-                          Navigator.pushNamed(context, '/lead_history');
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/lead_history',
+                          );
                         },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.show_chart,
                         title: 'Lead Status',
                         onTap: () {
-                          Navigator.pushNamed(context, '/leads_status');
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/lead_status',
+                          );
                         },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.send,
                         title: 'Lead Source',
                         onTap: () {
-                          Navigator.pushNamed(context, '/leads_source');
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/lead_source',
+                          );
                         },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.description_outlined,
                         title: 'Lead Form Name',
                         onTap: () {
-                          Navigator.pushNamed(context, '/leads_form_name');
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/lead_form_name',
+                          );
                         },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.public,
                         title: 'Lead Country',
                         onTap: () {
-                          Navigator.pushNamed(context, '/leads_country');
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/lead_country',
+                          );
                         },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.cloud_upload_outlined,
                         title: 'Import Leads',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/import_leads',
+                          );
+                        },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.cloud_download_outlined,
                         title: 'Export Leads',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/export_leads',
+                          );
+                        },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.school_outlined,
                         title: 'Admissions',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/admissions',
+                          );
+                        },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.book_outlined,
                         title: 'Lead Course',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/lead_course',
+                          );
+                        },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.check_circle_outline,
                         title: 'Lead Qualification',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/lead_qualification',
+                          );
+                        },
                       ),
                       DrawerSubMenuItem(
                         icon: Icons.settings_outlined,
                         title: 'Leads Settings',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/lead_settings',
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -227,7 +292,8 @@ class _AppDrawerState extends State<AppDrawer> {
                     icon: Icons.check_box_outlined,
                     title: 'Tasks',
                     onTap: () {
-                      Navigator.pushNamed(context, '/tasks');
+                      Navigator.pop(context);
+                      Navigator.pushReplacementNamed(context, '/tasks');
                     },
                   ),
 
@@ -252,31 +318,48 @@ class _AppDrawerState extends State<AppDrawer> {
 
                   // User Profile
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.white.withOpacity(0.3),
-                          radius: 24,
-                          child: const Text(
-                            'A',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
+                    padding: const EdgeInsets.only(left: 22, right: 60),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/profile_settings',
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(50),
+                          border: Border.all(width: 0.5, color: Colors.white),
+                        ),
+
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.white.withOpacity(0.3),
+                              radius: 20,
+                              child: const Text(
+                                'A',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 16),
+                            const Text(
+                              'Alex Johnson',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 16),
-                        const Text(
-                          'Alex Johnson',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
 
