@@ -72,19 +72,19 @@ class _ImportLeadsScreenState extends State<ImportLeadsScreen> {
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.cloud_outlined,
                               size: 14,
                               color: Color(0xFF00695C),
                             ),
-                            SizedBox(width: 6),
+                            const SizedBox(width: 6),
                             Text(
                               'ICA CORP DATA PROCESSOR',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF00695C),
+                                color: Colors.teal[800],
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -116,7 +116,7 @@ class _ImportLeadsScreenState extends State<ImportLeadsScreen> {
                         horizontal: isSmallScreen ? 24 : 48,
                       ),
                       child: Text(
-                        'Drag your file below or use our standard template to ensure 100% mapping accuracy for your lead fields.',
+                        'Upload your Excel file below to begin the two-step import process.',
                         style: TextStyle(
                           fontSize: isSmallScreen ? 13 : 14,
                           color: const Color(0xFF666666),
@@ -132,28 +132,12 @@ class _ImportLeadsScreenState extends State<ImportLeadsScreen> {
                       padding: EdgeInsets.symmetric(
                         horizontal: isSmallScreen ? 16 : 24,
                       ),
-                      child: isSmallScreen
-                          ? Column(
-                              children: [
-                                _buildDropZone(context, isSmallScreen),
-                                const SizedBox(height: 16),
-                                _buildRequirementsCard(isSmallScreen),
-                              ],
-                            )
-                          : Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 3,
-                                  child: _buildDropZone(context, isSmallScreen),
-                                ),
-                                const SizedBox(width: 24),
-                                Expanded(
-                                  flex: 2,
-                                  child: _buildRequirementsCard(isSmallScreen),
-                                ),
-                              ],
-                            ),
+                      child: Column(
+                        children: [
+                          _buildDropZone(context, isSmallScreen),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
                     ),
                     SizedBox(height: isSmallScreen ? 20 : 24),
 
@@ -167,7 +151,7 @@ class _ImportLeadsScreenState extends State<ImportLeadsScreen> {
                         child: ElevatedButton(
                           onPressed: () {},
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF757575),
+                            backgroundColor: Colors.teal[800],
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(
                               vertical: isSmallScreen ? 14 : 16,
@@ -178,9 +162,9 @@ class _ImportLeadsScreenState extends State<ImportLeadsScreen> {
                             elevation: 0,
                           ),
                           child: Text(
-                            'SECURE IMPORT RECORDS',
+                            'UPLOAD FILE',
                             style: TextStyle(
-                              fontSize: isSmallScreen ? 13 : 14,
+                              fontSize: isSmallScreen ? 14 : 16,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.5,
                             ),
@@ -248,61 +232,6 @@ class _ImportLeadsScreenState extends State<ImportLeadsScreen> {
                 ),
               ),
               SizedBox(height: isSmallScreen ? 24 : 32),
-
-              // Recent Synchronizations
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.grid_view_rounded,
-                        size: isSmallScreen ? 20 : 24,
-                        color: const Color(0xFF00695C),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Recent Synchronizations',
-                        style: TextStyle(
-                          fontSize: isSmallScreen ? 18 : 20,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1A1A1A),
-                        ),
-                      ),
-                    ],
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    child: Text(
-                      'VIEW ALL ACTIVITY',
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 11 : 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF00695C),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Sync items
-              _buildSyncItem(
-                'fb_leads_export_q4.csv',
-                'JAN 18, 2026',
-                '245 LEADS',
-                true,
-                isSmallScreen,
-              ),
-              const SizedBox(height: 12),
-              _buildSyncItem(
-                'fb_leads_export_q4.csv',
-                'JAN 18, 2026',
-                '245 LEADS',
-                true,
-                isSmallScreen,
-              ),
             ],
           ),
         ),
@@ -368,209 +297,6 @@ class _ImportLeadsScreenState extends State<ImportLeadsScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildRequirementsCard(bool isSmallScreen) {
-    return Container(
-      padding: EdgeInsets.all(isSmallScreen ? 20 : 22),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: const [
-              Icon(
-                Icons.description_outlined,
-                size: 14,
-                color: Color(0xFF00BFA5),
-              ),
-              SizedBox(width: 6),
-              Text(
-                'DOCUMENTATION',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF00BFA5),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Sync Requirements',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildRequirement(
-            '1',
-            'Headers must match exactly:\nFull Name, Email, Phone,\nCountry, qualification...',
-          ),
-          const SizedBox(height: 12),
-          _buildRequirement(
-            '2',
-            'Phone numbers should include\ncountry codes for WhatsApp\ncompatibility.',
-          ),
-          const SizedBox(height: 12),
-          _buildRequirement(
-            '3',
-            'Email addresses must be unique\nto prevent duplicates.',
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.download, size: 16),
-              label: const Text(
-                'DOWNLOAD CSV TEMPLATE',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: const BorderSide(color: Color(0xFF424242)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRequirement(String number, String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: const Color(0xFF2A2A2A),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            number,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFFCCCCCC),
-              height: 1.4,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSyncItem(
-    String filename,
-    String date,
-    String leads,
-    bool validated,
-    bool isSmallScreen,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(isSmallScreen ? 14 : 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: isSmallScreen ? 40 : 48,
-            height: isSmallScreen ? 40 : 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.description_outlined,
-              color: const Color(0xFF757575),
-              size: isSmallScreen ? 20 : 24,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  filename,
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 13 : 14,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1A1A1A),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$date • $leads',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 11 : 12,
-                    color: const Color(0xFF999999),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8F5E9),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.check_circle,
-                  size: 14,
-                  color: Color(0xFF00695C),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'VALIDATED',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 10 : 11,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF00695C),
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

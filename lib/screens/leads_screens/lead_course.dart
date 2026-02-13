@@ -258,7 +258,7 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
                               ),
                             ),
                           SizedBox(
-                            width: isSmallScreen ? 70 : 90,
+                            width: isSmallScreen ? 70 : 74,
                             child: Text(
                               'ACTIONS',
                               textAlign: TextAlign.center,
@@ -429,8 +429,8 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
                     color: const Color(0xFF00897B),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Flexible(
+                const SizedBox(width: 6),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -465,14 +465,10 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
             Expanded(
               flex: 2,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 decoration: BoxDecoration(
                   color: item.categoryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: item.categoryColor, width: 1),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -482,7 +478,7 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
                       size: 12,
                       color: item.categoryColor,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 2),
                     Flexible(
                       child: Text(
                         item.category,
@@ -501,7 +497,7 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
 
           // Action buttons
           SizedBox(
-            width: isSmallScreen ? 70 : 90,
+            width: isSmallScreen ? 70 : 74,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -510,16 +506,15 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
                   icon: const Icon(Icons.edit_outlined),
                   color: const Color(0xFFFF9800),
                   iconSize: isSmallScreen ? 18 : 20,
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(),
                 ),
-                const SizedBox(width: 8),
                 IconButton(
                   onPressed: () {},
                   icon: const Icon(Icons.delete_outline),
                   color: const Color(0xFFE53935),
                   iconSize: isSmallScreen ? 18 : 20,
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(),
                 ),
               ],

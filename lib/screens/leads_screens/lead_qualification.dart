@@ -253,7 +253,7 @@ class _LeadQualificationScreenState extends State<LeadQualificationScreen> {
                             ),
                           ),
                           SizedBox(
-                            width: isSmallScreen ? 70 : 90,
+                            width: isSmallScreen ? 70 : 74,
                             child: Text(
                               'ACTIONS',
                               textAlign: TextAlign.center,
@@ -424,8 +424,8 @@ class _LeadQualificationScreenState extends State<LeadQualificationScreen> {
                     color: const Color(0xFF00897B),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Flexible(
+                const SizedBox(width: 6),
+                Expanded(
                   child: Text(
                     item.name,
                     style: TextStyle(
@@ -444,7 +444,7 @@ class _LeadQualificationScreenState extends State<LeadQualificationScreen> {
           Expanded(
             flex: 2,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               decoration: BoxDecoration(
                 color: item.categoryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(4),
@@ -464,7 +464,7 @@ class _LeadQualificationScreenState extends State<LeadQualificationScreen> {
 
           // Action buttons
           SizedBox(
-            width: isSmallScreen ? 70 : 90,
+            width: isSmallScreen ? 70 : 74,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -473,16 +473,15 @@ class _LeadQualificationScreenState extends State<LeadQualificationScreen> {
                   icon: const Icon(Icons.edit_outlined),
                   color: const Color(0xFFFF9800),
                   iconSize: isSmallScreen ? 18 : 20,
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(),
                 ),
-                const SizedBox(width: 8),
                 IconButton(
                   onPressed: () {},
                   icon: const Icon(Icons.delete_outline),
                   color: const Color(0xFFE53935),
                   iconSize: isSmallScreen ? 18 : 20,
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(),
                 ),
               ],

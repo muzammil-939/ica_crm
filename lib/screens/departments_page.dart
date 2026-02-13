@@ -27,9 +27,9 @@ class DepartmentsPage extends StatelessWidget {
                       color: const Color(0xFFE8F4F1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.business_center_outlined,
-                      color: Color(0xFF0D7C66),
+                      color: Colors.teal[800],
                       size: 36,
                     ),
                   ),
@@ -113,7 +113,7 @@ class DepartmentsPage extends StatelessWidget {
                     width: double.infinity,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0D7C66),
+                      color: Colors.teal[800],
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(

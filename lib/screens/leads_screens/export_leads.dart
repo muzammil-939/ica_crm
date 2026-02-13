@@ -35,6 +35,14 @@ class _ExportLeadsScreenState extends State<ExportLeadsScreen> {
     'Branch': true,
     'Qualification': true,
     'Source': true,
+    'Course': true,
+    'Status': true,
+    'Assigned To': true,
+    'Follow Up': true,
+    'Created At': true,
+    'Updated At': true,
+    'Doctor\'s Note': true,
+    'Notes': true,
   };
 
   int get _activeFieldsCount => _exportFields.values.where((v) => v).length;

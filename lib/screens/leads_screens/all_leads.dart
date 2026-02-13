@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../layouts/main_layout.dart';
 
 class AllLeadsScreen extends StatefulWidget {
-  const AllLeadsScreen({Key? key}) : super(key: key);
+  const AllLeadsScreen({super.key});
 
   @override
   State<AllLeadsScreen> createState() => _AllLeadsScreenState();
@@ -176,16 +176,19 @@ class _AllLeadsScreenState extends State<AllLeadsScreen> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {},
-                        icon: const Icon(Icons.person_add, size: 20),
+                        icon: const Icon(Icons.person_add, size: 18),
                         label: const Text(
                           'REGISTER NEW LEAD',
-                          style: TextStyle(fontSize: 12),
+                          style: TextStyle(fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF059669),
                           foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 48),
                           padding: const EdgeInsets.symmetric(
-                            vertical: 6,
+                            vertical: 12,
                             horizontal: 8,
                           ),
                           shape: RoundedRectangleBorder(
@@ -195,52 +198,60 @@ class _AllLeadsScreenState extends State<AllLeadsScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        // Open filter modal/dialog
-                        _showFiltersDialog();
-                      },
-                      icon: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          const Icon(Icons.filter_list, size: 20),
-                          if (activeFilterCount > 0)
-                            Positioned(
-                              right: -8,
-                              top: -8,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFEF4444),
-                                  shape: BoxShape.circle,
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 18,
-                                  minHeight: 18,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '$activeFilterCount',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          // Open filter modal/dialog
+                          _showFiltersDialog();
+                        },
+                        icon: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            const Icon(Icons.filter_list, size: 18),
+                            if (activeFilterCount > 0)
+                              Positioned(
+                                right: -8,
+                                top: -8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFEF4444),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 18,
+                                    minHeight: 18,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '$activeFilterCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                      label: const Text('FILTERS'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                          ],
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                        label: const Text(
+                          'FILTERS',
+                          style: TextStyle(fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.black87,
+                          minimumSize: const Size(0, 48),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                     ),
@@ -248,19 +259,27 @@ class _AllLeadsScreenState extends State<AllLeadsScreen> {
                     // Clear Filters Button
                     if (selectedFilter.isNotEmpty ||
                         searchController.text.isNotEmpty)
-                      OutlinedButton.icon(
-                        onPressed: _clearFilters,
-                        icon: const Icon(Icons.refresh, size: 18),
-                        label: const Text('CLEAR FILTERS'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFFEF4444),
-                          side: const BorderSide(color: Color(0xFFEF4444)),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _clearFilters,
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: const Text(
+                            'CLEAR FILTERS',
+                            style: TextStyle(fontSize: 11),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFFEF4444),
+                            side: const BorderSide(color: Color(0xFFEF4444)),
+                            minimumSize: const Size(0, 48),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ),
                       ),

@@ -62,7 +62,7 @@ class _LeadSourceScreenState extends State<LeadSourceScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
-
+    final isSmallScreen = size.width < 360;
     return MainLayout(
       title: 'Lead Source',
       child: SingleChildScrollView(
@@ -72,6 +72,14 @@ class _LeadSourceScreenState extends State<LeadSourceScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Section
+              Text(
+                'Lead Source',
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 22 : (24),
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1A1A1A),
+                ),
+              ),
               Text(
                 'Track and manage the origins of your leads from various marketing channels.',
                 style: TextStyle(

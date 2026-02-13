@@ -37,11 +37,19 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
           // Header section with description
           Container(
             width: double.infinity,
-            color: Colors.white,
+
             padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  'Lead Status',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 22 : (24),
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1A1A1A),
+                  ),
+                ),
                 Text(
                   'Configure and manage stages of your lead journey to track conversion progress.',
                   style: TextStyle(
@@ -87,7 +95,7 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
                       child: Container(
                         height: isSmallScreen ? 40 : 44,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
+                          color: const Color(0xFFFFFFFF),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: const Color(0xFFE0E0E0),
@@ -138,188 +146,202 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
             ),
           ),
 
-          const SizedBox(height: 8),
-
-          // Table header
-          Container(
-            color: Colors.white,
-            padding: EdgeInsets.symmetric(
-              horizontal: isSmallScreen ? 8 : 16,
-              vertical: isSmallScreen ? 10 : 12,
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: isSmallScreen ? 25 : 40,
-                  child: Text(
-                    'S.NO',
-                    style: TextStyle(
-                      color: const Color(0xFF00897B),
-                      fontSize: isSmallScreen ? 10 : 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                SizedBox(width: isSmallScreen ? 8 : 12),
-                Expanded(
-                  child: Text(
-                    'STATUS NAME',
-                    style: TextStyle(
-                      color: const Color(0xFF00897B),
-                      fontSize: isSmallScreen ? 10 : 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                SizedBox(width: isSmallScreen ? 8 : 12),
-                Container(
-                  constraints: BoxConstraints(
-                    maxWidth: size.width * 0.28,
-                    minWidth: isSmallScreen ? 80 : 100,
-                  ),
-                  child: Text(
-                    'PREVIEW',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: const Color(0xFF00897B),
-                      fontSize: isSmallScreen ? 10 : 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                SizedBox(width: isSmallScreen ? 8 : 12),
-                SizedBox(
-                  width: isSmallScreen ? 60 : 68,
-                  child: Text(
-                    'ACTIONS',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: const Color(0xFF00897B),
-                      fontSize: isSmallScreen ? 10 : 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Table rows
           Expanded(
-            child: Container(
-              color: Colors.white,
-              child: ListView.separated(
-                padding: EdgeInsets.zero,
-                itemCount: _statuses.length,
-                separatorBuilder: (context, index) => Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: const Color(0xFFF0F0F0),
-                ),
-                itemBuilder: (context, index) {
-                  final status = _statuses[index];
-                  return _buildStatusRow(status, isSmallScreen, size.width);
-                },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 10.0,
+                horizontal: 20,
               ),
-            ),
-          ),
-
-          // Pagination
-          Container(
-            color: Colors.white,
-            padding: EdgeInsets.symmetric(
-              horizontal: isSmallScreen ? 12 : 16,
-              vertical: isSmallScreen ? 12 : 16,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Page navigation buttons
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: _currentPage > 1
-                          ? () {
-                              setState(() {
-                                _currentPage--;
-                              });
-                            }
-                          : null,
-                      icon: const Icon(Icons.chevron_left),
-                      color: const Color(0xFF666666),
-                      iconSize: isSmallScreen ? 20 : 24,
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
+              child: Column(
+                children: [
+                  // Table header
+                  Container(
+                    color: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmallScreen ? 8 : 16,
+                      vertical: isSmallScreen ? 10 : 12,
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: isSmallScreen ? 32 : 36,
-                      height: isSmallScreen ? 32 : 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00695C),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '1',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: isSmallScreen ? 13 : 14,
-                          fontWeight: FontWeight.w600,
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: isSmallScreen ? 25 : 40,
+                          child: Text(
+                            'S.NO',
+                            style: TextStyle(
+                              color: const Color(0xFF00897B),
+                              fontSize: isSmallScreen ? 10 : 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: isSmallScreen ? 32 : 36,
-                      height: isSmallScreen ? 32 : 36,
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '2',
-                        style: TextStyle(
-                          color: const Color(0xFF666666),
-                          fontSize: isSmallScreen ? 13 : 14,
-                          fontWeight: FontWeight.w500,
+                        SizedBox(width: isSmallScreen ? 8 : 12),
+                        Expanded(
+                          child: Text(
+                            'STATUS NAME',
+                            style: TextStyle(
+                              color: const Color(0xFF00897B),
+                              fontSize: isSmallScreen ? 10 : 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                         ),
-                      ),
+                        SizedBox(width: isSmallScreen ? 8 : 12),
+                        Container(
+                          constraints: BoxConstraints(
+                            maxWidth: size.width * 0.28,
+                            minWidth: isSmallScreen ? 80 : 100,
+                          ),
+                          child: Text(
+                            'PREVIEW',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: const Color(0xFF00897B),
+                              fontSize: isSmallScreen ? 10 : 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: isSmallScreen ? 8 : 12),
+                        SizedBox(
+                          width: isSmallScreen ? 60 : 68,
+                          child: Text(
+                            'ACTIONS',
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              color: const Color(0xFF00897B),
+                              fontSize: isSmallScreen ? 10 : 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: _currentPage < _totalPages
-                          ? () {
-                              setState(() {
-                                _currentPage++;
-                              });
-                            }
-                          : null,
-                      icon: const Icon(Icons.chevron_right),
-                      color: const Color(0xFF666666),
-                      iconSize: isSmallScreen ? 20 : 24,
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-
-                // Page indicator
-                Text(
-                  'PAGE 1 OF 2',
-                  style: TextStyle(
-                    color: const Color(0xFF999999),
-                    fontSize: isSmallScreen ? 11 : 12,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.5,
                   ),
-                ),
-              ],
+
+                  // Table rows
+                  Expanded(
+                    child: Container(
+                      color: Colors.white,
+                      child: ListView.separated(
+                        padding: EdgeInsets.zero,
+                        itemCount: _statuses.length,
+                        separatorBuilder: (context, index) => Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: const Color(0xFFF0F0F0),
+                        ),
+                        itemBuilder: (context, index) {
+                          final status = _statuses[index];
+                          return _buildStatusRow(
+                            status,
+                            isSmallScreen,
+                            size.width,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+
+                  // Pagination
+                  Container(
+                    color: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmallScreen ? 12 : 16,
+                      vertical: isSmallScreen ? 12 : 16,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Page navigation buttons
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: _currentPage > 1
+                                  ? () {
+                                      setState(() {
+                                        _currentPage--;
+                                      });
+                                    }
+                                  : null,
+                              icon: const Icon(Icons.chevron_left),
+                              color: const Color(0xFF666666),
+                              iconSize: isSmallScreen ? 20 : 24,
+                              padding: const EdgeInsets.all(8),
+                              constraints: const BoxConstraints(),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              width: isSmallScreen ? 32 : 36,
+                              height: isSmallScreen ? 32 : 36,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00695C),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                '1',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: isSmallScreen ? 13 : 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              width: isSmallScreen ? 32 : 36,
+                              height: isSmallScreen ? 32 : 36,
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                '2',
+                                style: TextStyle(
+                                  color: const Color(0xFF666666),
+                                  fontSize: isSmallScreen ? 13 : 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: _currentPage < _totalPages
+                                  ? () {
+                                      setState(() {
+                                        _currentPage++;
+                                      });
+                                    }
+                                  : null,
+                              icon: const Icon(Icons.chevron_right),
+                              color: const Color(0xFF666666),
+                              iconSize: isSmallScreen ? 20 : 24,
+                              padding: const EdgeInsets.all(8),
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
+
+                        // Page indicator
+                        Text(
+                          'PAGE 1 OF 2',
+                          style: TextStyle(
+                            color: const Color(0xFF999999),
+                            fontSize: isSmallScreen ? 11 : 12,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

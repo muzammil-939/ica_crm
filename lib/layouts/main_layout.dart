@@ -109,15 +109,18 @@ class MainLayout extends StatelessWidget {
               right: isSmallScreen ? 8 : 12,
               left: isSmallScreen ? 2 : 4,
             ),
-            child: CircleAvatar(
-              backgroundColor: const Color(0xFF00695C),
-              radius: avatarRadius,
-              child: Text(
-                'A',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: avatarFontSize,
-                  fontWeight: FontWeight.w600,
+            child: GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/profile_settings'),
+              child: CircleAvatar(
+                backgroundColor: const Color(0xFF00695C),
+                radius: avatarRadius,
+                child: Text(
+                  'A',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: avatarFontSize,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
