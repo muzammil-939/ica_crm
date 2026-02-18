@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ica_crm/layouts/main_layout.dart';
-
+import '../services/core/api_client.dart';
 import '../widgets/appdrawer.dart';
 
 class CommandCentralScreen extends StatefulWidget {
@@ -158,6 +158,14 @@ class _CommandCentralScreenState extends State<CommandCentralScreen> {
                     ],
                   ),
                   const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final client = ApiClient();
+                      final res = await client.get('/any-protected-endpoint/');
+                      print(res.statusCode);
+                    },
+                    child: const Text("Test API"),
+                  ),
 
                   // Section Title
                   Row(
