@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ica_crm/services/features/auth/auth_api.dart';
+import 'package:ica_crm/services/core/session_manager.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,6 +13,8 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthApi _authApi = AuthApi();
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -268,11 +272,28 @@ class _LoginPageState extends State<LoginPage> {
                           width: double.infinity,
                           height: isSmallScreen ? 52 : (isTablet ? 64 : 60),
                           child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushReplacementNamed(
-                                context,
-                                '/dashboard',
+                            onPressed: _isLoading
+                                ? null
+                                : () async {
+                              setState(() => _isLoading = true);
+
+                              final success = await _authApi.login(
+                                _usernameController.text.trim(),
+                                _passwordController.text.trim(),
                               );
+
+                              setState(() => _isLoading = false);
+
+                              if (success) {
+                                await SessionManager().startSessionMonitoring();
+                                Navigator.pushReplacementNamed(context, '/dashboard');
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Invalid username or password"),
+                                  ),
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.teal[800],
@@ -281,7 +302,9 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               elevation: 0,
                             ),
-                            child: Row(
+                            child: _isLoading
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(

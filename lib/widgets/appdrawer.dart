@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ica_crm/services/features/auth/auth_api.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -10,6 +12,30 @@ class AppDrawer extends StatefulWidget {
 class _AppDrawerState extends State<AppDrawer> {
   bool isRolesExpanded = false;
   bool isLeadsExpanded = false;
+
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  String? userEmail;
+  String? userInitial;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final email = await _storage.read(key: 'user_email');
+
+    if (!mounted) return;
+
+    setState(() {
+      userEmail = email;
+      userInitial = email != null && email.isNotEmpty
+          ? email[0].toUpperCase()
+          : '?';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -333,15 +359,14 @@ class _AppDrawerState extends State<AppDrawer> {
                           borderRadius: BorderRadius.circular(50),
                           border: Border.all(width: 0.5, color: Colors.white),
                         ),
-
                         child: Row(
                           children: [
                             CircleAvatar(
                               backgroundColor: Colors.white.withOpacity(0.3),
                               radius: 20,
-                              child: const Text(
-                                'A',
-                                style: TextStyle(
+                              child: Text(
+                                userInitial ?? '?',
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
@@ -349,12 +374,15 @@ class _AppDrawerState extends State<AppDrawer> {
                               ),
                             ),
                             const SizedBox(width: 16),
-                            const Text(
-                              'Alex Johnson',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
+                            Expanded(
+                              child: Text(
+                                userEmail ?? 'Loading...',
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ],
@@ -372,7 +400,39 @@ class _AppDrawerState extends State<AppDrawer> {
                       vertical: 16,
                     ),
                     child: InkWell(
-                      onTap: () {},
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text("Confirm Logout"),
+                            content: const Text("Are you sure you want to logout?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Cancel"),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  Navigator.pop(context); // close dialog
+
+                                  final authApi = AuthApi();
+                                  await authApi.logout();
+
+                                  if (!mounted) return;
+
+                                  Navigator.pushNamedAndRemoveUntil(
+                                    context,
+                                    '/login',
+                                        (route) => false,
+                                  );
+                                },
+                                child: const Text("Logout"),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+
                       child: Row(
                         children: [
                           const Icon(
