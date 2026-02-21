@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../layouts/main_layout.dart';
+import 'package:ica_crm/services/features/leads/leads_api.dart';
 
 class AllLeadsScreen extends StatefulWidget {
   const AllLeadsScreen({super.key});
@@ -9,90 +10,99 @@ class AllLeadsScreen extends StatefulWidget {
 }
 
 class _AllLeadsScreenState extends State<AllLeadsScreen> {
+
   String selectedFilter = 'FRESH LEADS';
   final TextEditingController searchController = TextEditingController();
   int activeFilterCount = 0;
   List<Lead> filteredLeads = [];
+  final LeadsApi _leadsApi = LeadsApi();
+  bool isLoading = true;
+  String? nextPageUrl;
+  bool isFetchingMore = false;
+  bool hasMore = true;
+  Set<LeadStatus> selectedStatuses = {};
+  Set<LeadSource> selectedSources = {};
+  bool isAdvancedFilterActive = false;
 
-  // Sample leads data - in production this would come from an API
-  final List<Lead> allLeads = [
-    Lead(
-      id: '#lead-1',
-      initials: 'PR',
-      initialsColor: const Color(0xFF10B981),
-      name: 'Priya Sharma',
-      email: 'priya.s@example.com',
-      phone: '9988776655',
-      country: 'India',
-      source: LeadSource.website,
-      assignedTo: 'Sarah',
-      status: LeadStatus.fresh,
-      createdAt: DateTime(2026, 2, 5, 22, 55),
-    ),
-    Lead(
-      id: '#lead-2',
-      initials: 'RA',
-      initialsColor: const Color(0xFF3B82F6),
-      name: 'Rahul Patel',
-      email: 'rahul.p@example.com',
-      phone: '9988776644',
-      country: 'India',
-      source: LeadSource.instagramAds,
-      assignedTo: 'Emily',
-      status: LeadStatus.hot,
-      createdAt: DateTime(2026, 2, 3, 22, 55),
-    ),
-    Lead(
-      id: '#lead-3',
-      initials: 'DR',
-      initialsColor: const Color(0xFF10B981),
-      name: 'Dr. Anjali Gupta',
-      email: 'anjali.g@example.com',
-      phone: '9988776633',
-      country: 'India',
-      source: LeadSource.linkedin,
-      assignedTo: 'Sarah',
-      status: LeadStatus.warm,
-      createdAt: DateTime(2026, 2, 5, 22, 55),
-    ),
-    Lead(
-      id: '#lead-4',
-      initials: 'DR',
-      initialsColor: const Color(0xFF10B981),
-      name: 'Dr. Rajesh Kumar',
-      email: 'rajesh.k@example.com',
-      phone: '9988776622',
-      country: 'UAE',
-      source: LeadSource.directReferral,
-      assignedTo: 'Michael',
-      status: LeadStatus.enrolled,
-      createdAt: DateTime(2026, 1, 31, 4, 2),
-    ),
-    Lead(
-      id: '#lead-5',
-      initials: 'DR',
-      initialsColor: const Color(0xFF10B981),
-      name: 'Dr. Sneha Reddy',
-      email: 'sneha.r@example.com',
-      phone: '9988776611',
-      country: 'India',
-      source: LeadSource.website,
-      assignedTo: 'Emily',
-      status: LeadStatus.enrolled,
-      createdAt: DateTime(2026, 1, 30, 0, 15),
-    ),
-  ];
+  final ScrollController _scrollController = ScrollController();
+
+  // leads data - in production this would come from an API
+  List<Lead> allLeads = [];
 
   @override
   void initState() {
     super.initState();
-    filteredLeads = allLeads;
+    _loadLeads();
     searchController.addListener(_onSearchChanged);
+
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200 &&
+          !isFetchingMore &&
+          hasMore) {
+        _loadMoreLeads();
+      }
+    });
+  }
+
+  Future<void> _loadMoreLeads() async {
+    if (nextPageUrl == null) return;
+
+    setState(() {
+      isFetchingMore = true;
+    });
+
+    try {
+      final data = await _leadsApi.getLeads(url: nextPageUrl);
+
+      final List results = data['results'] ?? [];
+
+      final newLeads =
+      results.map((json) => Lead.fromJson(json)).toList();
+
+      setState(() {
+        allLeads.addAll(newLeads);
+        filteredLeads = allLeads;
+        nextPageUrl = data['next'];
+        hasMore = nextPageUrl != null;
+        isFetchingMore = false;
+      });
+    } catch (e) {
+      print("ERROR LOADING MORE: $e");
+      setState(() {
+        isFetchingMore = false;
+      });
+    }
+  }
+
+  Future<void> _loadLeads() async {
+    try {
+      final data = await _leadsApi.getLeads();
+
+      final List results = data['results'] ?? [];
+
+      setState(() {
+        allLeads = results
+            .map((json) => Lead.fromJson(json))
+            .toList();
+
+        filteredLeads = allLeads;
+        nextPageUrl = data['next'];
+        hasMore = nextPageUrl != null;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("ERROR LOADING LEADS: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
   void dispose() {
     searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -148,6 +158,9 @@ class _AllLeadsScreenState extends State<AllLeadsScreen> {
       searchController.clear();
       filteredLeads = allLeads;
       activeFilterCount = 0;
+      selectedStatuses.clear();
+      selectedSources.clear();
+      isAdvancedFilterActive = false;
     });
   }
 
@@ -258,7 +271,8 @@ class _AllLeadsScreenState extends State<AllLeadsScreen> {
                     const SizedBox(width: 8),
                     // Clear Filters Button
                     if (selectedFilter.isNotEmpty ||
-                        searchController.text.isNotEmpty)
+                        searchController.text.isNotEmpty ||
+                        isAdvancedFilterActive)
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: _clearFilters,
@@ -371,7 +385,9 @@ class _AllLeadsScreenState extends State<AllLeadsScreen> {
           const SizedBox(height: 8),
           // Leads List
           Expanded(
-            child: filteredLeads.isEmpty
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filteredLeads.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -399,12 +415,20 @@ class _AllLeadsScreenState extends State<AllLeadsScreen> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredLeads.length,
-                    itemBuilder: (context, index) {
-                      return _buildLeadCard(filteredLeads[index]);
-                    },
-                  ),
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: filteredLeads.length + (hasMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index < filteredLeads.length) {
+                  return _buildLeadCard(filteredLeads[index]);
+                } else {
+                  return const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+              },
+            )
           ),
         ],
       ),
@@ -665,57 +689,116 @@ class _AllLeadsScreenState extends State<AllLeadsScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Advanced Filters'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Status'),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: LeadStatus.values.map((status) {
-                    return FilterChip(
-                      label: Text(status.displayName),
-                      onSelected: (selected) {},
-                    );
-                  }).toList(),
+        // Create TEMP copies of selections
+        Set<LeadStatus> tempStatuses = Set.from(selectedStatuses);
+        Set<LeadSource> tempSources = Set.from(selectedSources);
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              title: const Text('Advanced Filters'),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    const Text('Status'),
+                    const SizedBox(height: 8),
+
+                    Wrap(
+                      spacing: 8,
+                      children: LeadStatus.values.map((status) {
+                        final isSelected = tempStatuses.contains(status);
+
+                        return FilterChip(
+                          label: Text(status.displayName),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setModalState(() {
+                              if (isSelected) {
+                                tempStatuses.remove(status);
+                              } else {
+                                tempStatuses.add(status);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+
+                    const SizedBox(height: 16),
+                    const Text('Source'),
+                    const SizedBox(height: 8),
+
+                    Wrap(
+                      spacing: 8,
+                      children: LeadSource.values.map((source) {
+                        final isSelected = tempSources.contains(source);
+
+                        return FilterChip(
+                          label: Text(source.displayName),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setModalState(() {
+                              if (isSelected) {
+                                tempSources.remove(source);
+                              } else {
+                                tempSources.add(source);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                const Text('Source'),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: LeadSource.values.map((source) {
-                    return FilterChip(
-                      label: Text(source.displayName),
-                      onSelected: (selected) {},
-                    );
-                  }).toList(),
+              ),
+
+              actions: [
+
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+
+                    // Now commit selections to parent state
+                    setState(() {
+                      selectedStatuses = tempStatuses;
+                      selectedSources = tempSources;
+
+                      isAdvancedFilterActive =
+                          selectedStatuses.isNotEmpty ||
+                              selectedSources.isNotEmpty;
+
+                      activeFilterCount =
+                          selectedStatuses.length +
+                              selectedSources.length;
+
+                      filteredLeads = allLeads.where((lead) {
+                        final statusMatch =
+                            selectedStatuses.isEmpty ||
+                                selectedStatuses.contains(lead.status);
+
+                        final sourceMatch =
+                            selectedSources.isEmpty ||
+                                selectedSources.contains(lead.source);
+
+                        return statusMatch && sourceMatch;
+                      }).toList();
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF059669),
+                  ),
+                  child: const Text('Apply'),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                setState(() {
-                  activeFilterCount = 1;
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF059669),
-              ),
-              child: const Text('Apply'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -802,28 +885,82 @@ enum LeadSource {
 // Lead Model
 class Lead {
   final String id;
-  final String initials;
-  final Color initialsColor;
   final String name;
   final String email;
   final String phone;
   final String country;
-  final LeadSource source;
   final String assignedTo;
   final LeadStatus status;
+  final LeadSource source;
   final DateTime createdAt;
 
   Lead({
     required this.id,
-    required this.initials,
-    required this.initialsColor,
     required this.name,
     required this.email,
     required this.phone,
     required this.country,
-    required this.source,
     required this.assignedTo,
     required this.status,
+    required this.source,
     required this.createdAt,
   });
+
+  factory Lead.fromJson(Map<String, dynamic> json) {
+    return Lead(
+      id: json['id'].toString(),
+      name: json['full_name'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      country: json['country']?.toString() ?? '',
+      assignedTo: json['assigned_to_name'] ?? '',
+      status: _parseStatus(json['status_name']),
+      source: _parseSource(json['source_name']),
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at']) ?? DateTime.now()
+          : DateTime.now(),
+    );
+  }
+
+  static LeadStatus _parseStatus(String? status) {
+    if (status == null) return LeadStatus.fresh;
+
+    final s = status.toLowerCase();
+
+    if (s.contains('hot')) return LeadStatus.hot;
+    if (s.contains('warm')) return LeadStatus.warm;
+    if (s.contains('cold')) return LeadStatus.cold;
+    if (s.contains('enroll')) return LeadStatus.enrolled;
+    if (s.contains('lost')) return LeadStatus.lost;
+    if (s.contains('follow')) return LeadStatus.warm;
+
+    return LeadStatus.fresh;
+  }
+
+  static LeadSource _parseSource(String? source) {
+    if (source == null) return LeadSource.other;
+
+    final s = source.toLowerCase();
+
+    if (s.contains('web')) return LeadSource.website;
+    if (s.contains('instagram')) return LeadSource.instagramAds;
+    if (s.contains('facebook')) return LeadSource.facebookAds;
+    if (s.contains('linkedin')) return LeadSource.linkedin;
+    if (s.contains('reference')) return LeadSource.directReferral;
+    if (s.contains('call')) return LeadSource.coldCall;
+    if (s.contains('email')) return LeadSource.email;
+
+    return LeadSource.other;
+  }
+
+  /// Computed property for UI
+  String get initials {
+    if (name.isEmpty) return '';
+    final parts = name.split(' ');
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
+
+  /// Computed color based on status
+  Color get initialsColor => status.color;
 }
