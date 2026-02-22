@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../layouts/main_layout.dart';
 import 'package:ica_crm/services/features/leads/leads_api.dart';
+import 'package:ica_crm/services/modals/leads/create_lead_dialog.dart';
 
 class AllLeadsScreen extends StatefulWidget {
   const AllLeadsScreen({super.key});
@@ -188,7 +189,16 @@ class _AllLeadsScreenState extends State<AllLeadsScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {},
+                onPressed: () {
+                  showDialog(
+                  context: context,
+                  builder: (_) => CreateLeadDialog(
+                    onSuccess: () {
+                      _loadLeads(); // refresh after create
+                      },
+                      ),
+                  );
+                  },
                         icon: const Icon(Icons.person_add, size: 18),
                         label: const Text(
                           'REGISTER NEW LEAD',
