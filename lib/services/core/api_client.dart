@@ -14,24 +14,33 @@ class ApiClient {
   }
 
   Future<void> _forceLogout() async {
+    // 1. Clear tokens so the app knows we are logged out
     await _storage.deleteAll();
 
+    // 2. Check if the navigator is actually ready
     final context = navigatorKey.currentContext;
-    if (context == null) return;
+    if (context == null) {
+      // If we are here during app startup/hot restart and context isn't ready,
+      // the main.dart logic should handle showing the login page naturally.
+      return;
+    }
 
+    // 3. Only show the dialog if the user is already inside the app
+    // and an active session expires.
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text("Session Expired"),
-        content: const Text(
-            "Your session has expired. Please sign in again."),
+        content: const Text("Your session has expired. Please sign in again."),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              navigatorKey.currentState!
-                  .pushNamedAndRemoveUntil('/login', (route) => false);
+              // Use a post-frame callback to ensure navigation happens after dialog closes
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+              });
             },
             child: const Text("OK"),
           ),
@@ -59,7 +68,6 @@ class ApiClient {
 
       await _storage.write(key: 'access', value: data['access']);
 
-      // VERY IMPORTANT
       if (data.containsKey('refresh')) {
         await _storage.write(key: 'refresh', value: data['refresh']);
       }
@@ -74,8 +82,12 @@ class ApiClient {
   Future<http.Response> get(String endpoint) async {
     String? access = await _getAccessToken();
 
-    final response = await http.get(
-      Uri.parse('$baseUrl$endpoint'),
+    final uri = endpoint.startsWith('http')
+        ? Uri.parse(endpoint)
+        : Uri.parse('$baseUrl$endpoint');
+
+    var response = await http.get(
+      uri,
       headers: {
         'Authorization': 'Bearer $access',
         'Content-Type': 'application/json',
@@ -85,19 +97,19 @@ class ApiClient {
     if (response.statusCode == 401) {
       final refreshed = await _refreshToken();
 
-      if (refreshed) {
-        access = await _getAccessToken();
-
-        return await http.get(
-          Uri.parse('$baseUrl$endpoint'),
-          headers: {
-            'Authorization': 'Bearer $access',
-            'Content-Type': 'application/json',
-          },
-        );
-      } else {
+      if (!refreshed) {
         throw Exception("Session expired");
       }
+
+      access = await _getAccessToken();
+
+      response = await http.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $access',
+          'Content-Type': 'application/json',
+        },
+      );
     }
 
     return response;
@@ -107,7 +119,7 @@ class ApiClient {
       String endpoint, Map<String, dynamic> body) async {
     String? access = await _getAccessToken();
 
-    final response = await http.post(
+    var response = await http.post(
       Uri.parse('$baseUrl$endpoint'),
       headers: {
         'Authorization': 'Bearer $access',
@@ -119,20 +131,20 @@ class ApiClient {
     if (response.statusCode == 401) {
       final refreshed = await _refreshToken();
 
-      if (refreshed) {
-        access = await _getAccessToken();
-
-        return await http.post(
-          Uri.parse('$baseUrl$endpoint'),
-          headers: {
-            'Authorization': 'Bearer $access',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode(body),
-        );
-      } else {
+      if (!refreshed) {
         throw Exception("Session expired");
       }
+
+      access = await _getAccessToken();
+
+      response = await http.post(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: {
+          'Authorization': 'Bearer $access',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
+      );
     }
 
     return response;
