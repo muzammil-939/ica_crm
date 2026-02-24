@@ -76,6 +76,37 @@ class LeadsApi {
 
     throw Exception("Create failed: ${response.statusCode}");
   }
+  /// =========================
+  /// Lead History API
+  /// =========================
+  Future<Map<String, dynamic>> getLeadLogs({String? url}) async {
+    final endpoint =
+    url != null && url.startsWith('http') ? url : (url ?? '/lead-logs/');
+
+    final response = await _client.get(endpoint);
+
+    print("LEAD LOGS STATUS: ${response.statusCode}");
+    print("LEAD LOGS BODY: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+
+      // Case 1: Paginated response
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      // Case 2: Non-paginated list
+      if (decoded is List) {
+        return {
+          "results": decoded,
+          "next": null,
+        };
+      }
+    }
+
+    throw Exception("Failed to load lead logs");
+  }
 
   /// =========================
   /// DROPDOWN APIs
