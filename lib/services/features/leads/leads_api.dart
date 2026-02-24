@@ -85,9 +85,6 @@ class LeadsApi {
 
     final response = await _client.get(endpoint);
 
-    print("LEAD LOGS STATUS: ${response.statusCode}");
-    print("LEAD LOGS BODY: ${response.body}");
-
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
 
@@ -108,6 +105,37 @@ class LeadsApi {
     throw Exception("Failed to load lead logs");
   }
 
+  Future<Map<String, dynamic>> getLeadStatuses({String? url}) async {
+    final endpoint =
+    url != null && url.startsWith('http')
+        ? url
+        : (url ?? '/lead-status/');
+
+    final response = await _client.get(endpoint);
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+
+      // Case 1: Paginated response (Map)
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      // Case 2: Non-paginated list
+      if (decoded is List) {
+        return {
+          "results": decoded,
+          "next": null,
+        };
+      }
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Failed to load lead statuses");
+  }
   /// =========================
   /// DROPDOWN APIs
   /// =========================

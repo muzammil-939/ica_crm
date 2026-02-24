@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../layouts/main_layout.dart';
+import 'package:ica_crm/services/features/leads/leads_api.dart';
 
 class LeadStatusScreen extends StatefulWidget {
   const LeadStatusScreen({super.key});
@@ -11,19 +12,24 @@ class LeadStatusScreen extends StatefulWidget {
 class _LeadStatusScreenState extends State<LeadStatusScreen> {
   final TextEditingController _searchController = TextEditingController();
   int _currentPage = 1;
-  final int _totalPages = 2;
+  int _itemsPerPage = 10;
+  int get _totalPages {
+    if (_statuses.isEmpty) return 1;
+    return (_statuses.length / _itemsPerPage).ceil();
+  }
 
-  final List<LeadStatus> _statuses = [
-    LeadStatus(id: 1, name: 'Admission done', color: const Color(0xFF00897B)),
-    LeadStatus(
-      id: 2,
-      name: 'will enroll later',
-      color: const Color(0xFF00897B),
-    ),
-    LeadStatus(id: 3, name: 'Junk', color: const Color(0xFF00897B)),
-    LeadStatus(id: 4, name: 'Fresh Lead', color: const Color(0xFF00897B)),
-    LeadStatus(id: 5, name: 'Followup', color: const Color(0xFF00897B)),
-  ];
+  List<LeadStatus> get _paginatedStatuses {
+    final start = (_currentPage - 1) * _itemsPerPage;
+    final end = start + _itemsPerPage;
+    return _statuses.sublist(
+      start,
+      end > _statuses.length ? _statuses.length : end,
+    );
+  }
+  final LeadsApi _api = LeadsApi();
+  List<LeadStatus> _statuses = [];
+  bool _isLoading = true;
+
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +139,7 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: Text(
-                    '18 STATUSES',
+                    '${_statuses.length} STATUSES',
                     style: TextStyle(
                       color: const Color(0xFF999999),
                       fontSize: isSmallScreen ? 11 : 12,
@@ -171,11 +177,11 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
                               color: const Color(0xFF00897B),
                               fontSize: isSmallScreen ? 10 : 12,
                               fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
                             ),
                           ),
                         ),
                         SizedBox(width: isSmallScreen ? 8 : 12),
+
                         Expanded(
                           child: Text(
                             'STATUS NAME',
@@ -183,28 +189,10 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
                               color: const Color(0xFF00897B),
                               fontSize: isSmallScreen ? 10 : 12,
                               fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
                             ),
                           ),
                         ),
-                        SizedBox(width: isSmallScreen ? 8 : 12),
-                        Container(
-                          constraints: BoxConstraints(
-                            maxWidth: size.width * 0.28,
-                            minWidth: isSmallScreen ? 80 : 100,
-                          ),
-                          child: Text(
-                            'PREVIEW',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: const Color(0xFF00897B),
-                              fontSize: isSmallScreen ? 10 : 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: isSmallScreen ? 8 : 12),
+
                         SizedBox(
                           width: isSmallScreen ? 60 : 68,
                           child: Text(
@@ -214,28 +202,29 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
                               color: const Color(0xFF00897B),
                               fontSize: isSmallScreen ? 10 : 12,
                               fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
                             ),
                           ),
                         ),
                       ],
-                    ),
+                    )
                   ),
 
                   // Table rows
                   Expanded(
                     child: Container(
                       color: Colors.white,
-                      child: ListView.separated(
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : ListView.separated(
                         padding: EdgeInsets.zero,
-                        itemCount: _statuses.length,
-                        separatorBuilder: (context, index) => Divider(
+                        itemCount: _paginatedStatuses.length,
+                        separatorBuilder: (context, index) => const Divider(
                           height: 1,
                           thickness: 1,
-                          color: const Color(0xFFF0F0F0),
+                          color: Color(0xFFF0F0F0),
                         ),
                         itemBuilder: (context, index) {
-                          final status = _statuses[index];
+                          final status = _paginatedStatuses[index];
                           return _buildStatusRow(
                             status,
                             isSmallScreen,
@@ -256,89 +245,49 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Page navigation buttons
                         Row(
                           children: [
                             IconButton(
                               onPressed: _currentPage > 1
                                   ? () {
-                                      setState(() {
-                                        _currentPage--;
-                                      });
-                                    }
+                                setState(() {
+                                  _currentPage--;
+                                });
+                              }
                                   : null,
                               icon: const Icon(Icons.chevron_left),
-                              color: const Color(0xFF666666),
-                              iconSize: isSmallScreen ? 20 : 24,
-                              padding: const EdgeInsets.all(8),
-                              constraints: const BoxConstraints(),
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              width: isSmallScreen ? 32 : 36,
-                              height: isSmallScreen ? 32 : 36,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF00695C),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                '1',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: isSmallScreen ? 13 : 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
+
+                            Text(
+                              '$_currentPage',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              width: isSmallScreen ? 32 : 36,
-                              height: isSmallScreen ? 32 : 36,
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                '2',
-                                style: TextStyle(
-                                  color: const Color(0xFF666666),
-                                  fontSize: isSmallScreen ? 13 : 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
+
                             IconButton(
                               onPressed: _currentPage < _totalPages
                                   ? () {
-                                      setState(() {
-                                        _currentPage++;
-                                      });
-                                    }
+                                setState(() {
+                                  _currentPage++;
+                                });
+                              }
                                   : null,
                               icon: const Icon(Icons.chevron_right),
-                              color: const Color(0xFF666666),
-                              iconSize: isSmallScreen ? 20 : 24,
-                              padding: const EdgeInsets.all(8),
-                              constraints: const BoxConstraints(),
                             ),
                           ],
                         ),
 
-                        // Page indicator
                         Text(
-                          'PAGE 1 OF 2',
-                          style: TextStyle(
-                            color: const Color(0xFF999999),
-                            fontSize: isSmallScreen ? 11 : 12,
+                          'PAGE $_currentPage OF $_totalPages',
+                          style: const TextStyle(
+                            color: Color(0xFF999999),
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            letterSpacing: 0.5,
                           ),
                         ),
                       ],
-                    ),
+                    )
                   ),
                 ],
               ),
@@ -349,11 +298,40 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchLeadStatuses();
+  }
+
+  Future<void> _fetchLeadStatuses({String? url}) async {
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await _api.getLeadStatuses(url: url);
+
+      final List results = response['results'] ?? [];
+
+      setState(() {
+        _statuses =
+            results.map((json) => LeadStatus.fromJson(json)).toList();
+        _currentPage = 1; // important
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load statuses: $e")),
+      );
+    }
+  }
+
   Widget _buildStatusRow(
-    LeadStatus status,
-    bool isSmallScreen,
-    double screenWidth,
-  ) {
+      LeadStatus status,
+      bool isSmallScreen,
+      double screenWidth,
+      ) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isSmallScreen ? 8 : 16,
@@ -361,11 +339,11 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
       ),
       child: Row(
         children: [
-          // Serial number
+          // Serial number (corrected for pagination)
           SizedBox(
             width: isSmallScreen ? 25 : 40,
             child: Text(
-              '${status.id}',
+              '${((_currentPage - 1) * _itemsPerPage) + _paginatedStatuses.indexOf(status) + 1}',
               style: TextStyle(
                 color: const Color(0xFF666666),
                 fontSize: isSmallScreen ? 13 : 14,
@@ -389,39 +367,6 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
             ),
           ),
 
-          SizedBox(width: isSmallScreen ? 8 : 12),
-
-          // Preview chip
-          Container(
-            constraints: BoxConstraints(
-              maxWidth: screenWidth * 0.28,
-              minWidth: isSmallScreen ? 80 : 100,
-            ),
-            padding: EdgeInsets.symmetric(
-              horizontal: isSmallScreen ? 8 : 12,
-              vertical: isSmallScreen ? 5 : 6,
-            ),
-            decoration: BoxDecoration(
-              color: status.color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              status.name.toUpperCase(),
-              style: TextStyle(
-                color: status.color,
-                fontSize: isSmallScreen ? 9 : 11,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.3,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
-          ),
-
-          SizedBox(width: isSmallScreen ? 8 : 12),
-
           // Actions
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -431,17 +376,12 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
                 icon: const Icon(Icons.edit_outlined),
                 color: const Color(0xFFFFA726),
                 iconSize: isSmallScreen ? 18 : 20,
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
               ),
-              SizedBox(width: isSmallScreen ? 4 : 8),
               IconButton(
                 onPressed: () {},
                 icon: const Icon(Icons.delete_outline),
                 color: const Color(0xFFE53935),
                 iconSize: isSmallScreen ? 18 : 20,
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
               ),
             ],
           ),
@@ -460,7 +400,16 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
 class LeadStatus {
   final int id;
   final String name;
-  final Color color;
 
-  LeadStatus({required this.id, required this.name, required this.color});
+  LeadStatus({
+    required this.id,
+    required this.name,
+  });
+
+  factory LeadStatus.fromJson(Map<String, dynamic> json) {
+    return LeadStatus(
+      id: json['id'],
+      name: json['name'],
+    );
+  }
 }
