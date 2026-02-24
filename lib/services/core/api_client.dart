@@ -149,6 +149,75 @@ class ApiClient {
 
     return response;
   }
+  Future<http.Response> put(String endpoint, Map<String, dynamic> payload) async {
+    String? access = await _getAccessToken();
+
+    final url = endpoint.startsWith('http') ? Uri.parse(endpoint) : Uri.parse('$baseUrl$endpoint');
+
+    var response = await http.put(
+      url,
+      headers: {
+        'Authorization': 'Bearer $access',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 401) {
+      final refreshed = await _refreshToken();
+
+      if (!refreshed) {
+        throw Exception("Session expired");
+      }
+
+      access = await _getAccessToken();
+
+      response = await http.put(
+        url,
+        headers: {
+          'Authorization': 'Bearer $access',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(payload),
+      );
+    }
+
+    return response;
+  }
+
+  Future<http.Response> delete(String endpoint) async {
+    String? access = await _getAccessToken();
+
+    final url = endpoint.startsWith('http') ? Uri.parse(endpoint) : Uri.parse('$baseUrl$endpoint');
+
+    var response = await http.delete(
+      url,
+      headers: {
+        'Authorization': 'Bearer $access',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 401) {
+      final refreshed = await _refreshToken();
+
+      if (!refreshed) {
+        throw Exception("Session expired");
+      }
+
+      access = await _getAccessToken();
+
+      response = await http.delete(
+        url,
+        headers: {
+          'Authorization': 'Bearer $access',
+          'Content-Type': 'application/json',
+        },
+      );
+    }
+
+    return response;
+  }
 
   Future<void> refreshForMonitoring() async {
     final success = await _refreshToken();

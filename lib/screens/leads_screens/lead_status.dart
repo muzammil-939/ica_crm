@@ -71,7 +71,7 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
                   children: [
                     // Add Status button
                     ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: _showAddStatusDialog,
                       icon: const Icon(Icons.add, size: 18),
                       label: Text(
                         'ADD STATUS',
@@ -326,6 +326,244 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
       );
     }
   }
+  void _showEditStatusDialog(LeadStatus status) {
+    final TextEditingController nameController =
+    TextEditingController(text: status.name);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Edit Lead Status',
+          style: TextStyle(
+            color: Color(0xFF00695C),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Status name',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+            ),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final updatedName = nameController.text.trim();
+              if (updatedName.isEmpty) return;
+
+              Navigator.pop(context);
+
+              try {
+                setState(() => _isLoading = true);
+
+                await _api.updateLeadStatus(
+                  status.id,
+                  {'name': updatedName},
+                );
+
+                setState(() {
+                  final index =
+                  _statuses.indexWhere((s) => s.id == status.id);
+
+                  if (index != -1) {
+                    _statuses[index] =
+                        LeadStatus(id: status.id, name: updatedName);
+                  }
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Status updated successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Update failed: $e')),
+                );
+              } finally {
+                setState(() => _isLoading = false);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00695C),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete(LeadStatus status) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Delete Status',
+          style: TextStyle(
+            color: Color(0xFFE53935),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${status.name}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+            ),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE53935),
+              foregroundColor: Colors.white
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+
+              try {
+                setState(() => _isLoading = true);
+
+                await _api.deleteLeadStatus(status.id);
+
+                setState(() {
+                  _statuses.removeWhere((s) => s.id == status.id);
+
+                  // Fix page if last item removed
+                  if (_currentPage > _totalPages) {
+                    _currentPage = _totalPages;
+                  }
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Status deleted successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Delete failed: $e')),
+                );
+              } finally {
+                setState(() => _isLoading = false);
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddStatusDialog() {
+    final TextEditingController _nameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFFF5F5F5), // subtle light gray background for dialog
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text(
+          'Add Lead Status',
+          style: TextStyle(
+            color: Color(0xFF00695C), // your teal-green main color
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        content: TextField(
+          controller: _nameController,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Status name',
+            hintStyle: const TextStyle(color: Color(0xFF999999)),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF00695C)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF004D40), width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          ),
+          style: const TextStyle(
+            color: Color(0xFF1A1A1A),
+            fontSize: 16,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF00695C), // teal text color
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = _nameController.text.trim();
+              if (name.isEmpty) return;
+
+              Navigator.pop(context);
+
+              try {
+                setState(() => _isLoading = true);
+
+                final created = await _api.createLeadStatus({'name': name});
+
+                final newStatus = LeadStatus.fromJson(created);
+
+                setState(() {
+                  _statuses.insert(0, newStatus); // Add on top
+                  _currentPage = 1;
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Status added successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to add status: $e')),
+                );
+              } finally {
+                setState(() => _isLoading = false);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00695C), // teal button bg
+              foregroundColor: Colors.white, // white text
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Add',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildStatusRow(
       LeadStatus status,
@@ -372,13 +610,13 @@ class _LeadStatusScreenState extends State<LeadStatusScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                onPressed: () {},
+                onPressed: () => _showEditStatusDialog(status),
                 icon: const Icon(Icons.edit_outlined),
                 color: const Color(0xFFFFA726),
                 iconSize: isSmallScreen ? 18 : 20,
               ),
               IconButton(
-                onPressed: () {},
+                onPressed: () => _confirmDelete(status),
                 icon: const Icon(Icons.delete_outline),
                 color: const Color(0xFFE53935),
                 iconSize: isSmallScreen ? 18 : 20,

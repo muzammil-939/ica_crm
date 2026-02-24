@@ -136,6 +136,64 @@ class LeadsApi {
 
     throw Exception("Failed to load lead statuses");
   }
+
+  Future<Map<String, dynamic>> createLeadStatus(Map<String, dynamic> payload) async {
+    final response = await _client.post('/lead-status/', payload);
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Create lead status failed: ${response.statusCode}");
+  }
+  /// =========================
+  /// UPDATE LEAD STATUS
+  /// =========================
+  Future<Map<String, dynamic>> updateLeadStatus(int id, Map<String, dynamic> payload) async {
+    final response = await _client.put('/lead-status/$id/', payload);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Update failed: ${response.statusCode}");
+  }
+
+  /// =========================
+  /// DELETE LEAD STATUS
+  /// =========================
+  Future<void> deleteLeadStatus(int id) async {
+    final response = await _client.delete('/lead-status/$id/');
+
+    if (response.statusCode == 204) {
+      return;
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Delete failed: ${response.statusCode}");
+  }
+
   /// =========================
   /// DROPDOWN APIs
   /// =========================
