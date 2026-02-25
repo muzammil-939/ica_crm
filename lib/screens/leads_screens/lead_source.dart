@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../layouts/main_layout.dart';
+import 'package:ica_crm/services/features/leads/leads_api.dart';
 
 class LeadSourceScreen extends StatefulWidget {
   const LeadSourceScreen({super.key});
@@ -11,58 +12,34 @@ class LeadSourceScreen extends StatefulWidget {
 class _LeadSourceScreenState extends State<LeadSourceScreen> {
   final TextEditingController _searchController = TextEditingController();
   int _currentPage = 1;
-  final int _totalPages = 2;
+  final LeadsApi _api = LeadsApi();
+  List<Map<String, dynamic>> _leadSources = [];
+  bool _isLoading = true;
 
-  final List<Map<String, String>> _leadSources = [
-    {
-      'id': '#1',
-      'source': 'Website',
-      'type': 'DIRECT',
-      'channelId': 'web_main_01',
-      'icon': 'direct',
-    },
-    {
-      'id': '#2',
-      'source': 'WhatsApp Campaign',
-      'type': 'MESSAGING',
-      'channelId': 'wa_mkt_2024',
-      'icon': 'direct',
-    },
-    {
-      'id': '#3',
-      'source': 'Instagram Ads',
-      'type': 'SOCIAL',
-      'channelId': 'ig_ads_leadgen',
-      'icon': 'direct',
-    },
-    {
-      'id': '#4',
-      'source': 'Facebook Ads',
-      'type': 'SOCIAL',
-      'channelId': 'fb_form_39202',
-      'icon': 'facebook',
-    },
-    {
-      'id': '#5',
-      'source': 'Reference',
-      'type': 'ORGANIC',
-      'channelId': 'ref_internal',
-      'icon': 'direct',
-    },
-    {
-      'id': '#6',
-      'source': 'Social Media',
-      'type': 'SOCIAL',
-      'channelId': 'sm_generic',
-      'icon': 'direct',
-    },
-  ];
+  int _itemsPerPage = 10;
+
+  int get _totalPages {
+    if (_leadSources.isEmpty) return 1;
+    return (_leadSources.length / _itemsPerPage).ceil();
+  }
+
+  List<Map<String, dynamic>> get _paginatedSources {
+    final start = (_currentPage - 1) * _itemsPerPage;
+    final end = start + _itemsPerPage;
+
+    return _leadSources.sublist(
+      start,
+      end > _leadSources.length ? _leadSources.length : end,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
     final isSmallScreen = size.width < 360;
+    final startPage = (_currentPage - 1).clamp(1, _totalPages);
+    final endPage = (_currentPage + 1).clamp(1, _totalPages);
     return MainLayout(
       title: 'Lead Source',
       child: SingleChildScrollView(
@@ -94,7 +71,7 @@ class _LeadSourceScreenState extends State<LeadSourceScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: _showAddSourceDialog,
                   icon: const Icon(Icons.add_circle_outline, size: 20),
                   label: const Text(
                     'ADD SOURCE',
@@ -187,7 +164,7 @@ class _LeadSourceScreenState extends State<LeadSourceScreen> {
                       child: Row(
                         children: [
                           SizedBox(
-                            width: 35,
+                            width: 30,
                             child: Text(
                               'ID',
                               style: TextStyle(
@@ -198,37 +175,43 @@ class _LeadSourceScreenState extends State<LeadSourceScreen> {
                               ),
                             ),
                           ),
+
                           const SizedBox(width: 8),
-                          Expanded(
+
+                          const Expanded(
                             child: Text(
                               'SOURCE',
                               style: TextStyle(
-                                color: const Color(0xFF999999),
+                                color: Color(0xFF999999),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 0.5,
                               ),
                             ),
                           ),
-                          SizedBox(
-                            width: 100,
-                            child: Text(
-                              'CHANNEL ID',
-                              style: TextStyle(
-                                color: const Color(0xFF999999),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
+
+                          // Hide CHANNEL ID on mobile
+                          if (!isMobile)
+                            const SizedBox(
+                              width: 100,
+                              child: Text(
+                                'CHANNEL ID',
+                                style: TextStyle(
+                                  color: Color(0xFF999999),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
-                          ),
+
                           SizedBox(
-                            width: 70,
-                            child: Text(
+                            width: isMobile ? 60 : 70,
+                            child: const Text(
                               'ACTIONS',
                               textAlign: TextAlign.right,
                               style: TextStyle(
-                                color: const Color(0xFF999999),
+                                color: Color(0xFF999999),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 0.5,
@@ -240,125 +223,118 @@ class _LeadSourceScreenState extends State<LeadSourceScreen> {
                     ),
 
                     // Table Rows
-                    ListView.separated(
+                    _isLoading
+                        ? const Padding(
+                      padding: EdgeInsets.all(40),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                        : ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _leadSources.length,
-                      separatorBuilder: (context, index) => const Divider(
+                      itemCount: _paginatedSources.length,
+                      separatorBuilder: (_, __) => const Divider(
                         height: 1,
                         thickness: 1,
                         color: Color(0xFFE0E0E0),
                       ),
                       itemBuilder: (context, index) {
-                        final source = _leadSources[index];
-                        return _buildLeadSourceRow(source);
+                        return _buildLeadSourceRow(_paginatedSources[index], index);
                       },
                     ),
 
                     // Pagination
+                    // Pagination (Mobile Optimized)
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       decoration: const BoxDecoration(
                         border: Border(
                           top: BorderSide(color: Color(0xFFE0E0E0), width: 1),
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
                         children: [
-                          // Left arrow
-                          InkWell(
-                            onTap: _currentPage > 1
-                                ? () {
-                                    setState(() {
-                                      _currentPage--;
-                                    });
-                                  }
-                                : null,
-                            child: Icon(
-                              Icons.chevron_left,
-                              color: _currentPage > 1
-                                  ? const Color(0xFF666666)
-                                  : const Color(0xFFCCCCCC),
-                              size: 24,
+                          // Page Info
+                          Text(
+                            'PAGE $_currentPage OF $_totalPages',
+                            style: const TextStyle(
+                              color: Color(0xFF999999),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
+                          const SizedBox(height: 12),
 
-                          // Page numbers
+                          // Arrows + Numbers
                           Row(
-                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              for (int i = 1; i <= _totalPages; i++)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                  ),
+                              InkWell(
+                                onTap: _currentPage > 1
+                                    ? () => setState(() => _currentPage--)
+                                    : null,
+                                child: Icon(
+                                  Icons.chevron_left,
+                                  color: _currentPage > 1
+                                      ? const Color(0xFF666666)
+                                      : const Color(0xFFCCCCCC),
+                                ),
+                              ),
+
+                              const SizedBox(width: 6),
+
+                              ...List.generate(
+                                _totalPages,
+                                    (index) => index + 1,
+                              )
+                                  .where((page) =>
+                              page >= _currentPage - 1 &&
+                                  page <= _currentPage + 1)
+                                  .map(
+                                    (i) => Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
                                   child: InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        _currentPage = i;
-                                      });
-                                    },
+                                    onTap: () => setState(() => _currentPage = i),
                                     child: Container(
-                                      width: 36,
-                                      height: 36,
+                                      width: 34,
+                                      height: 34,
+                                      alignment: Alignment.center,
                                       decoration: BoxDecoration(
                                         color: _currentPage == i
                                             ? const Color(0xFF00695C)
                                             : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(6),
                                       ),
-                                      alignment: Alignment.center,
                                       child: Text(
                                         '$i',
                                         style: TextStyle(
                                           color: _currentPage == i
                                               ? Colors.white
                                               : const Color(0xFF666666),
-                                          fontSize: 14,
+                                          fontSize: 13,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                            ],
-                          ),
+                              )
+                                  .toList(),
 
-                          // Right section
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'PAGE $_currentPage OF $_totalPages',
-                                style: const TextStyle(
-                                  color: Color(0xFF999999),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 6),
+
                               InkWell(
                                 onTap: _currentPage < _totalPages
-                                    ? () {
-                                        setState(() {
-                                          _currentPage++;
-                                        });
-                                      }
+                                    ? () => setState(() => _currentPage++)
                                     : null,
                                 child: Icon(
                                   Icons.chevron_right,
                                   color: _currentPage < _totalPages
                                       ? const Color(0xFF666666)
                                       : const Color(0xFFCCCCCC),
-                                  size: 24,
                                 ),
                               ),
                             ],
-                          ),
+                          )
                         ],
                       ),
                     ),
@@ -372,16 +348,255 @@ class _LeadSourceScreenState extends State<LeadSourceScreen> {
     );
   }
 
-  Widget _buildLeadSourceRow(Map<String, String> source) {
+  @override
+  void initState() {
+    super.initState();
+    _fetchLeadSources();
+  }
+
+  Future<void> _fetchLeadSources() async {
+    try {
+      final data = await _api.getLeadSources();
+
+      final results = data['results'] ?? [];
+
+      setState(() {
+        _leadSources = List<Map<String, dynamic>>.from(results);
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load sources: $e")),
+      );
+    }
+  }
+
+  void _showEditSourceDialog(Map<String, dynamic> source) {
+    final TextEditingController controller =
+    TextEditingController(text: source['name']);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Edit Lead Source',
+          style: TextStyle(
+            color: Color(0xFF00695C),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Source name',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+            ),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final updatedName = controller.text.trim();
+              if (updatedName.isEmpty) return;
+
+              Navigator.pop(context);
+
+              try {
+                setState(() => _isLoading = true);
+
+                final updated = await _api.updateLeadSource(
+                  source['id'],
+                  {'name': updatedName},
+                );
+
+                setState(() {
+                  final index = _leadSources.indexWhere(
+                          (s) => s['id'] == source['id']);
+
+                  if (index != -1) {
+                    _leadSources[index] = updated;
+                  }
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Lead source updated successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Update failed: $e')),
+                );
+              } finally {
+                setState(() => _isLoading = false);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00695C),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteSource(Map<String, dynamic> source) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Delete Lead Source',
+          style: TextStyle(
+            color: Color(0xFFE53935),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${source['name']}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+            ),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE53935),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+
+              try {
+                setState(() => _isLoading = true);
+
+                await _api.deleteLeadSource(source['id']);
+
+                setState(() {
+                  _leadSources.removeWhere(
+                          (s) => s['id'] == source['id']);
+
+                  if (_currentPage > _totalPages) {
+                    _currentPage = _totalPages;
+                  }
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Lead source deleted successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Delete failed: $e')),
+                );
+              } finally {
+                setState(() => _isLoading = false);
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddSourceDialog() {
+    final TextEditingController nameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Add Lead Source',
+          style: TextStyle(
+            color: Color(0xFF00695C),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Source name',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+            ),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+
+              Navigator.pop(context);
+
+              try {
+                setState(() => _isLoading = true);
+
+                final created =
+                await _api.createLeadSource({'name': name});
+
+                setState(() {
+                  _leadSources.insert(0, created);
+                  _currentPage = 1;
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Lead source added successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Create failed: $e')),
+                );
+              } finally {
+                setState(() => _isLoading = false);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00695C),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLeadSourceRow(Map<String, dynamic> source, int index) {
+    final String name = source['name']?.toString() ?? '';
+    final int serialNumber =
+        ((_currentPage - 1) * _itemsPerPage) + index + 1;
+
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
           // ID
           SizedBox(
-            width: 35,
+            width: 30,
             child: Text(
-              source['id']!,
+              '$serialNumber',
               style: const TextStyle(
                 color: Color(0xFF999999),
                 fontSize: 13,
@@ -389,94 +604,58 @@ class _LeadSourceScreenState extends State<LeadSourceScreen> {
               ),
             ),
           ),
+
           const SizedBox(width: 8),
 
-          // Source with Icon
+          // SOURCE (Flexible instead of fixed)
           Expanded(
             child: Row(
               children: [
-                _buildSourceIcon(source['icon']!),
-                const SizedBox(width: 10),
+                _buildSourceIcon(name),
+                const SizedBox(width: 8),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        source['source']!,
-                        style: const TextStyle(
-                          color: Color(0xFF1A1A1A),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        source['type']!,
-                        style: const TextStyle(
-                          color: Color(0xFF999999),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF1A1A1A),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
 
-          // Channel ID
-          Container(
-            width: 100,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(4),
+          // Hide Channel ID on mobile
+          if (!isMobile)
+            const SizedBox(
+              width: 100,
             ),
-            child: Text(
-              source['channelId']!,
-              style: const TextStyle(
-                color: Color(0xFF666666),
-                fontSize: 11,
-                fontFamily: 'monospace',
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
-          ),
 
-          // Actions
+          // ACTIONS (shrink on mobile)
           SizedBox(
-            width: 70,
+            width: isMobile ? 60 : 70,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 InkWell(
-                  onTap: () {},
-                  child: const Padding(
-                    padding: EdgeInsets.all(6),
-                    child: Icon(
-                      Icons.edit_outlined,
-                      color: Color(0xFFFF9800),
-                      size: 20,
-                    ),
+                  onTap: () => _showEditSourceDialog(source),
+                  child: const Icon(
+                    Icons.edit_outlined,
+                    color: Color(0xFFFF9800),
+                    size: 18,
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
                 InkWell(
-                  onTap: () {},
-                  child: const Padding(
-                    padding: EdgeInsets.all(6),
-                    child: Icon(
-                      Icons.delete_outline,
-                      color: Color(0xFFE53935),
-                      size: 20,
-                    ),
+                  onTap: () => _confirmDeleteSource(source),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Color(0xFFE53935),
+                    size: 18,
                   ),
                 ),
               ],
@@ -487,19 +666,27 @@ class _LeadSourceScreenState extends State<LeadSourceScreen> {
     );
   }
 
-  Widget _buildSourceIcon(String iconType) {
+  Widget _buildSourceIcon(String name) {
     IconData icon;
     Color bgColor;
 
-    switch (iconType) {
-      case 'facebook':
-        icon = Icons.facebook;
-        bgColor = const Color(0xFF1877F2);
-        break;
-      case 'direct':
-      default:
-        icon = Icons.navigation;
-        bgColor = const Color(0xFF00BFA5);
+    final lower = name.toLowerCase();
+
+    if (lower.contains('facebook') || lower == 'fb') {
+      icon = Icons.facebook;
+      bgColor = const Color(0xFF1877F2);
+    } else if (lower.contains('whatsapp')) {
+      icon = Icons.message;
+      bgColor = const Color(0xFF25D366);
+    } else if (lower.contains('instagram') || lower == 'ig') {
+      icon = Icons.camera_alt;
+      bgColor = const Color(0xFFE1306C);
+    } else if (lower.contains('web')) {
+      icon = Icons.language;
+      bgColor = const Color(0xFF00BFA5);
+    } else {
+      icon = Icons.navigation;
+      bgColor = const Color(0xFF00BFA5);
     }
 
     return Container(
