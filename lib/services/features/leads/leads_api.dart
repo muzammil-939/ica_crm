@@ -195,6 +195,96 @@ class LeadsApi {
   }
 
   /// =========================
+  /// LEAD SOURCE APIs
+  /// =========================
+
+  Future<Map<String, dynamic>> getLeadSources({String? url}) async {
+    final endpoint =
+    url != null && url.startsWith('http')
+        ? url
+        : (url ?? '/lead-source/');
+
+    final response = await _client.get(endpoint);
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+
+      // Paginated
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      // Non-paginated
+      if (decoded is List) {
+        return {
+          "results": decoded,
+          "next": null,
+        };
+      }
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Failed to load lead sources");
+  }
+
+  Future<Map<String, dynamic>> createLeadSource(
+      Map<String, dynamic> payload) async {
+    final response = await _client.post('/lead-source/', payload);
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Create lead source failed: ${response.statusCode}");
+  }
+
+  Future<Map<String, dynamic>> updateLeadSource(
+      int id, Map<String, dynamic> payload) async {
+    final response = await _client.put('/lead-source/$id/', payload);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Update failed: ${response.statusCode}");
+  }
+
+  Future<void> deleteLeadSource(int id) async {
+    final response = await _client.delete('/lead-source/$id/');
+
+    if (response.statusCode == 204) {
+      return;
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Delete failed: ${response.statusCode}");
+  }
+
+  /// =========================
   /// DROPDOWN APIs
   /// =========================
 
