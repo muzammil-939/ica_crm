@@ -357,6 +357,84 @@ class LeadsApi {
     throw Exception("Delete lead form failed: ${response.statusCode}");
   }
 
+  Future<List<Map<String, dynamic>>> getLeadCountries({String? url}) async {
+    final endpoint =
+    url != null && url.startsWith('http') ? url : (url ?? '/lead-countries/');
+
+    final response = await _client.get(endpoint);
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is List) {
+        return List<Map<String, dynamic>>.from(decoded);
+      }
+
+      throw Exception("Unexpected response format");
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Failed to load lead countries: ${response.statusCode}");
+  }
+
+  Future<Map<String, dynamic>> createLeadCountry(
+      Map<String, dynamic> payload) async {
+    final response = await _client.post('/lead-countries/', payload);
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Create lead country failed: ${response.statusCode}");
+  }
+
+  Future<Map<String, dynamic>> updateLeadCountry(
+      int id,
+      Map<String, dynamic> payload) async {
+    final response = await _client.put('/lead-countries/$id/', payload);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Update lead country failed: ${response.statusCode}");
+  }
+
+  Future<void> deleteLeadCountry(int id) async {
+    final response = await _client.delete('/lead-countries/$id/');
+
+    if (response.statusCode == 204) {
+      return;
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Delete lead country failed: ${response.statusCode}");
+  }
+
   /// =========================
   /// DROPDOWN APIs
   /// =========================

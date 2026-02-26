@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../layouts/main_layout.dart';
+import 'package:ica_crm/services/features/leads/leads_api.dart';
 
 class LeadCountryScreen extends StatefulWidget {
   const LeadCountryScreen({super.key});
@@ -11,15 +12,81 @@ class LeadCountryScreen extends StatefulWidget {
 class _LeadCountryScreenState extends State<LeadCountryScreen> {
   final TextEditingController _searchController = TextEditingController();
 
-  // Sample data - replace with your actual data source
-  final List<Map<String, dynamic>> _countries = [
-    {'code': 'LK', 'name': 'LK', 'region': 'SOUTH ASIA'},
-    {'code': 'IN', 'name': 'IN', 'region': 'SOUTH ASIA'},
-    {'code': 'NP', 'name': 'NP', 'region': 'SOUTH ASIA'},
-    {'code': 'IN', 'name': 'India', 'region': 'SOUTH ASIA'},
-    {'code': 'BD', 'name': 'BD', 'region': 'SOUTH ASIA'},
-    {'code': 'NP', 'name': 'Nepal', 'region': 'SOUTH ASIA'},
-  ];
+  final LeadsApi _api = LeadsApi();
+
+  List<Map<String, dynamic>> _allCountries = [];
+  List<Map<String, dynamic>> _filteredCountries = [];
+
+  bool _isLoading = false;
+
+  int _currentPage = 1;
+  int _totalPages = 1;
+
+  static const int _pageSize = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCountries();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  Future<void> _fetchCountries() async {
+    try {
+      setState(() => _isLoading = true);
+
+      final data = await _api.getLeadCountries();
+
+      setState(() {
+        _allCountries = data;
+        _applySearchAndPagination();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load countries: $e')),
+      );
+    }
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _currentPage = 1;
+      _applySearchAndPagination();
+    });
+  }
+
+  void _applySearchAndPagination() {
+    final query = _searchController.text.toLowerCase();
+
+    _filteredCountries = _allCountries.where((country) {
+      final name = country['name']?.toString().toLowerCase() ?? '';
+      final id = country['id']?.toString() ?? '';
+      return name.contains(query) || id.contains(query);
+    }).toList();
+
+    _totalPages = (_filteredCountries.length / _pageSize).ceil();
+    if (_totalPages == 0) _totalPages = 1;
+
+    if (_currentPage > _totalPages) {
+      _currentPage = _totalPages;
+    }
+  }
+
+  List<Map<String, dynamic>> get _paginatedCountries {
+    final start = (_currentPage - 1) * _pageSize;
+    final end = start + _pageSize;
+
+    if (start >= _filteredCountries.length) return [];
+
+    return _filteredCountries.sublist(
+      start,
+      end > _filteredCountries.length
+          ? _filteredCountries.length
+          : end,
+    );
+  }
 
   @override
   void dispose() {
@@ -89,9 +156,7 @@ class _LeadCountryScreenState extends State<LeadCountryScreen> {
       children: [
         // Add Country Button
         ElevatedButton.icon(
-          onPressed: () {
-            // Handle add country action
-          },
+          onPressed: _showAddCountryDialog,
           icon: Icon(Icons.add_circle_outline, size: isSmallScreen ? 18 : 20),
           label: Text(
             'ADD COUNTRY',
@@ -155,7 +220,7 @@ class _LeadCountryScreenState extends State<LeadCountryScreen> {
           Padding(
             padding: const EdgeInsets.only(left: 12),
             child: Text(
-              '${_countries.length} COUNTRIES',
+    '${_filteredCountries.length} COUNTRIES',
               style: TextStyle(
                 fontSize: isSmallScreen ? 11 : 12,
                 color: const Color(0xFF999999),
@@ -256,20 +321,49 @@ class _LeadCountryScreenState extends State<LeadCountryScreen> {
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: _countries.length,
+            itemCount: _paginatedCountries.length,
             separatorBuilder: (context, index) =>
                 const Divider(height: 1, color: Color(0xFFF0F0F0)),
             itemBuilder: (context, index) {
+              final serialNumber =
+                  ((_currentPage - 1) * _pageSize) + index + 1;
+
               return _buildTableRow(
-                index + 1,
-                _countries[index],
+                serialNumber,
+                _paginatedCountries[index],
                 isSmallScreen,
                 isTablet,
               );
             },
           ),
+          SizedBox(height: 20),
+          _buildPaginationControls(),
         ],
       ),
+    );
+  }
+
+  Widget _buildPaginationControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        IconButton(
+          onPressed: _currentPage > 1
+              ? () => setState(() => _currentPage--)
+              : null,
+          icon: const Icon(Icons.chevron_left),
+        ),
+        Text(
+          'Page $_currentPage of $_totalPages',
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        IconButton(
+          onPressed: _currentPage < _totalPages
+              ? () => setState(() => _currentPage++)
+              : null,
+          icon: const Icon(Icons.chevron_right),
+        ),
+      ],
     );
   }
 
@@ -334,11 +428,11 @@ class _LeadCountryScreenState extends State<LeadCountryScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 2),
-                      Text(
-                        country['region'],
+                      const Text(
+                        'Lead Country',
                         style: TextStyle(
-                          fontSize: isSmallScreen ? 11 : 12,
-                          color: const Color(0xFF999999),
+                          fontSize: 12,
+                          color: Color(0xFF999999),
                         ),
                       ),
                     ],
@@ -362,7 +456,7 @@ class _LeadCountryScreenState extends State<LeadCountryScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  country['code'],
+                  country['id'].toString(),
                   style: TextStyle(
                     fontSize: isSmallScreen ? 11 : 12,
                     fontWeight: FontWeight.w600,
@@ -395,7 +489,7 @@ class _LeadCountryScreenState extends State<LeadCountryScreen> {
                       color: const Color(0xFFFF8F00),
                     ),
                     onPressed: () {
-                      // Handle edit action
+                      _showEditCountryDialog(country);
                     },
                   ),
                 ),
@@ -417,7 +511,58 @@ class _LeadCountryScreenState extends State<LeadCountryScreen> {
                       color: const Color(0xFFE53935),
                     ),
                     onPressed: () {
-                      // Handle delete action
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          title: const Text(
+                            'Delete Country',
+                            style: TextStyle(
+                              color: Color(0xFFE53935),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          content: const Text(
+                            'Are you sure you want to delete this country?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFE53935),
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: () async {
+                                Navigator.pop(context);
+
+                                try {
+                                  await _api.deleteLeadCountry(country['id']);
+
+                                  setState(() {
+                                    _allCountries.removeWhere(
+                                            (c) => c['id'] == country['id']);
+                                    _applySearchAndPagination();
+                                  });
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Country deleted')),
+                                  );
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Delete failed: $e')),
+                                  );
+                                }
+                              },
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -428,4 +573,144 @@ class _LeadCountryScreenState extends State<LeadCountryScreen> {
       ),
     );
   }
+  void _showAddCountryDialog() {
+    final TextEditingController nameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text(
+          'Create Lead Country',
+          style: TextStyle(
+            color: Color(0xFF059669),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            hintText: 'Country Name',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF059669),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+
+              Navigator.pop(context);
+
+              try {
+                final newCountry =
+                await _api.createLeadCountry({"name": name});
+
+                setState(() {
+                  _allCountries.insert(0, newCountry);
+                  _applySearchAndPagination();
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Country created successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Create failed: $e')),
+                );
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditCountryDialog(Map<String, dynamic> country) {
+    final TextEditingController nameController =
+    TextEditingController(text: country['name']);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text(
+          'Edit Lead Country',
+          style: TextStyle(
+            color: Color(0xFF00695C),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            hintText: 'Country Name',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00695C),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              final updatedName = nameController.text.trim();
+              if (updatedName.isEmpty) return;
+
+              Navigator.pop(context);
+
+              try {
+                final updatedCountry =
+                await _api.updateLeadCountry(
+                  country['id'],
+                  {"name": updatedName},
+                );
+
+                setState(() {
+                  final index = _allCountries.indexWhere(
+                          (c) => c['id'] == country['id']);
+
+                  if (index != -1) {
+                    _allCountries[index] = updatedCountry;
+                  }
+
+                  _applySearchAndPagination();
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Country updated successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Update failed: $e')),
+                );
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
 }
+
