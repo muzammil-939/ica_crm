@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../layouts/main_layout.dart';
+import 'package:ica_crm/services/features/leads/leads_api.dart';
 
 class LeadCourseScreen extends StatefulWidget {
   const LeadCourseScreen({super.key});
@@ -10,53 +11,80 @@ class LeadCourseScreen extends StatefulWidget {
 
 class _LeadCourseScreenState extends State<LeadCourseScreen> {
   final TextEditingController _searchController = TextEditingController();
-  int _currentPage = 1;
-  final int _totalPages = 2;
+  final LeadsApi _api = LeadsApi();
 
-  final List<CourseItem> _courses = [
-    CourseItem(
-      sNo: 1,
-      name: 'Dermatology',
-      subCategory: 'MEDICAL',
-      category: 'Medical',
-      categoryColor: const Color(0xFF00897B),
-    ),
-    CourseItem(
-      sNo: 2,
-      name: 'Obstetrics And Gynecology',
-      subCategory: 'MEDICAL',
-      category: 'Medical',
-      categoryColor: const Color(0xFF00897B),
-    ),
-    CourseItem(
-      sNo: 3,
-      name: 'Advanced Fetal Medicine',
-      subCategory: 'SPECIALIZATION',
-      category: 'Specialization',
-      categoryColor: const Color(0xFF00897B),
-    ),
-    CourseItem(
-      sNo: 4,
-      name: 'Pediatrics',
-      subCategory: 'MEDICAL',
-      category: 'Medical',
-      categoryColor: const Color(0xFF00897B),
-    ),
-    CourseItem(
-      sNo: 5,
-      name: 'Clinical Cardiology',
-      subCategory: 'MEDICAL',
-      category: 'Medical',
-      categoryColor: const Color(0xFF00897B),
-    ),
-    CourseItem(
-      sNo: 6,
-      name: 'Pg Diploma Clinical Cardiology',
-      subCategory: 'PG DIPLOMA',
-      category: 'PG Diploma',
-      categoryColor: const Color(0xFF00897B),
-    ),
-  ];
+  bool isLoading = true;
+
+  List<Map<String, dynamic>> allCourses = [];
+  List<Map<String, dynamic>> filteredCourses = [];
+
+  int _currentPage = 1;
+  int _totalPages = 1;
+  int _totalCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCourses();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  Future<void> _fetchCourses() async {
+    try {
+      setState(() => isLoading = true);
+
+      final data = await _api.getLeadCourses();
+
+      setState(() {
+        allCourses = data;
+        filteredCourses = data;
+        _totalCount = data.length;
+
+        _totalPages = (filteredCourses.length / 10).ceil();
+        if (_totalPages == 0) _totalPages = 1;
+
+        _currentPage = 1;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load courses: $e")),
+      );
+    }
+  }
+
+  List<Map<String, dynamic>> get _paginatedCourses {
+    const pageSize = 10;
+
+    final start = (_currentPage - 1) * pageSize;
+    final end = start + pageSize;
+
+    if (start >= filteredCourses.length) return [];
+
+    return filteredCourses.sublist(
+      start,
+      end > filteredCourses.length ? filteredCourses.length : end,
+    );
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+
+    setState(() {
+      filteredCourses = allCourses.where((course) {
+        final name = course['name']?.toString().toLowerCase() ?? '';
+        return name.contains(query);
+      }).toList();
+
+      _totalPages = (filteredCourses.length / 10).ceil();
+      if (_totalPages == 0) _totalPages = 1;
+
+      _currentPage = 1;
+    });
+  }
 
   @override
   void dispose() {
@@ -114,7 +142,7 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
                 children: [
                   // Add Course button
                   ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: _showCreateCourseDialog,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF00695C),
                       foregroundColor: Colors.white,
@@ -181,7 +209,7 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  '15 COURSES',
+                  '${filteredCourses.length} COURSES',
                   style: TextStyle(
                     fontSize: isSmallScreen ? 10.0 : 11.0,
                     fontWeight: FontWeight.w600,
@@ -235,7 +263,6 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
                             ),
                           ),
                           Expanded(
-                            flex: 4,
                             child: Text(
                               'COURSE NAME',
                               style: TextStyle(
@@ -245,18 +272,6 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
                               ),
                             ),
                           ),
-                          if (!isSmallScreen)
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                'CATEGORY',
-                                style: TextStyle(
-                                  fontSize: tableFontSize,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF00897B),
-                                ),
-                              ),
-                            ),
                           SizedBox(
                             width: isSmallScreen ? 70 : 74,
                             child: Text(
@@ -270,21 +285,21 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
                             ),
                           ),
                         ],
-                      ),
+                      )
                     ),
 
                     // Table rows
                     ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _courses.length,
+                      itemCount: _paginatedCourses.length,
                       separatorBuilder: (context, index) => Divider(
                         height: 1,
                         thickness: 1,
                         color: const Color(0xFFF0F0F0),
                       ),
                       itemBuilder: (context, index) {
-                        final item = _courses[index];
+                        final item = _paginatedCourses[index];
                         return _buildTableRow(
                           item: item,
                           isSmallScreen: isSmallScreen,
@@ -368,7 +383,7 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
 
                   // Right page info
                   Text(
-                    'PAGE 1 OF 2',
+                    'PAGE $_currentPage OF $_totalPages',
                     style: TextStyle(
                       fontSize: isSmallScreen ? 10.0 : 11.0,
                       color: const Color(0xFF999999),
@@ -388,7 +403,7 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
   }
 
   Widget _buildTableRow({
-    required CourseItem item,
+    required Map<String, dynamic> item,
     required bool isSmallScreen,
     required double tableFontSize,
   }) {
@@ -399,11 +414,11 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
       ),
       child: Row(
         children: [
-          // Serial number
+          // Serial Number
           SizedBox(
             width: isSmallScreen ? 35 : 50,
             child: Text(
-              '${item.sNo}',
+              '${item['id']}',
               style: TextStyle(
                 fontSize: tableFontSize,
                 color: const Color(0xFF666666),
@@ -412,9 +427,8 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
             ),
           ),
 
-          // Course name with icon
+          // Course Name
           Expanded(
-            flex: 4,
             child: Row(
               children: [
                 Container(
@@ -429,92 +443,43 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
                     color: const Color(0xFF00897B),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.name,
-                        style: TextStyle(
-                          fontSize: tableFontSize,
-                          color: const Color(0xFF1A1A1A),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.subCategory,
-                        style: TextStyle(
-                          fontSize: isSmallScreen ? 9.5 : 10.5,
-                          color: const Color(0xFF999999),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                  child: Text(
+                    item['name'] ?? '',
+                    style: TextStyle(
+                      fontSize: tableFontSize,
+                      color: const Color(0xFF1A1A1A),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
           ),
 
-          // Category badge (hidden on small screens)
-          if (!isSmallScreen)
-            Expanded(
-              flex: 2,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                decoration: BoxDecoration(
-                  color: item.categoryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.bookmark_outline,
-                      size: 12,
-                      color: item.categoryColor,
-                    ),
-                    const SizedBox(width: 2),
-                    Flexible(
-                      child: Text(
-                        item.category,
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          color: item.categoryColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          // Action buttons
-          SizedBox(
-            width: isSmallScreen ? 70 : 74,
+          // Actions
+          IntrinsicWidth(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () => _showEditCourseDialog(item),
                   icon: const Icon(Icons.edit_outlined),
                   color: const Color(0xFFFF9800),
                   iconSize: isSmallScreen ? 18 : 20,
-                  padding: const EdgeInsets.all(4),
+                  padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
+                const SizedBox(width: 4),
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () => _confirmDelete(item),
                   icon: const Icon(Icons.delete_outline),
                   color: const Color(0xFFE53935),
                   iconSize: isSmallScreen ? 18 : 20,
-                  padding: const EdgeInsets.all(4),
+                  padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
               ],
@@ -524,20 +489,204 @@ class _LeadCourseScreenState extends State<LeadCourseScreen> {
       ),
     );
   }
-}
 
-class CourseItem {
-  final int sNo;
-  final String name;
-  final String subCategory;
-  final String category;
-  final Color categoryColor;
+  void _showEditCourseDialog(Map<String, dynamic> course) {
+    final TextEditingController nameController =
+    TextEditingController(text: course['name']);
 
-  CourseItem({
-    required this.sNo,
-    required this.name,
-    required this.subCategory,
-    required this.category,
-    required this.categoryColor,
-  });
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Edit Lead Course',
+          style: TextStyle(
+            color: Color(0xFFFFA726),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(hintText: 'Course name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFA726),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              final updatedName = nameController.text.trim();
+              if (updatedName.isEmpty) return;
+
+              Navigator.pop(context);
+
+              try {
+                setState(() => isLoading = true);
+
+                final updated = await _api.updateLeadCourses(
+                  course['id'],
+                  {"name": updatedName},
+                );
+
+                if (!mounted) return;
+
+                setState(() {
+                  final index =
+                  allCourses.indexWhere((c) => c['id'] == course['id']);
+
+                  if (index != -1) {
+                    allCourses[index] = updated;
+                  }
+
+                  filteredCourses = allCourses;
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Course updated successfully')),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Update failed: $e')),
+                );
+              } finally {
+                setState(() => isLoading = false);
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete(Map<String, dynamic> course) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Delete Course',
+          style: TextStyle(
+            color: Color(0xFFE53935),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${course['name']}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE53935),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+
+              try {
+                setState(() => isLoading = true);
+
+                await _api.deleteLeadCourses(course['id']);
+
+                if (!mounted) return;
+
+                setState(() {
+                  allCourses.removeWhere((c) => c['id'] == course['id']);
+                  filteredCourses.removeWhere((c) => c['id'] == course['id']);
+
+                  _totalPages = (filteredCourses.length / 10).ceil();
+                  if (_totalPages == 0) _totalPages = 1;
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Course deleted successfully')),
+                );
+              } catch (e) {
+                if (!mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Delete failed: $e')),
+                );
+              } finally {
+                setState(() => isLoading = false);
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCreateCourseDialog() {
+    final TextEditingController nameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Create Lead Course',
+          style: TextStyle(
+            color: Color(0xFF00695C),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(hintText: 'Course name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00695C),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+
+              Navigator.pop(context);
+
+              try {
+                setState(() => isLoading = true);
+
+                final newCourse = await _api.createLeadCourses({
+                  "name": name,
+                });
+
+                setState(() {
+                  allCourses.insert(0, newCourse);
+                  filteredCourses = allCourses;
+                  _totalPages = (filteredCourses.length / 10).ceil();
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Course created successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Create failed: $e')),
+                );
+              } finally {
+                setState(() => isLoading = false);
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
 }
