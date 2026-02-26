@@ -327,7 +327,6 @@ class _LeadCountryScreenState extends State<LeadCountryScreen> {
             itemBuilder: (context, index) {
               final serialNumber =
                   ((_currentPage - 1) * _pageSize) + index + 1;
-
               return _buildTableRow(
                 serialNumber,
                 _paginatedCountries[index],
