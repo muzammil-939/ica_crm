@@ -284,6 +284,79 @@ class LeadsApi {
     throw Exception("Delete failed: ${response.statusCode}");
   }
 
+  Future<Map<String, dynamic>> getLeadForms({String? url}) async {
+    final endpoint = url != null && url.startsWith('http') ? url : (url ?? '/form-names/');
+    final response = await _client.get(endpoint);
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) return decoded;
+      if (decoded is List) return {"results": decoded, "next": null};
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Failed to load lead forms: ${response.statusCode}");
+  }
+
+  // Create a new lead form
+  Future<Map<String, dynamic>> createLeadForm(Map<String, dynamic> payload) async {
+    final response = await _client.post('/form-names/', payload);
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Create lead form failed: ${response.statusCode}");
+  }
+
+  // Update an existing lead form
+  Future<Map<String, dynamic>> updateLeadForm(int id, Map<String, dynamic> payload) async {
+    final response = await _client.put('/form-names/$id/', payload);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Update lead form failed: ${response.statusCode}");
+  }
+
+  // Delete a lead form
+  Future<void> deleteLeadForm(int id) async {
+    final response = await _client.delete('/form-names/$id/');
+
+    if (response.statusCode == 204) {
+      return;
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Delete lead form failed: ${response.statusCode}");
+  }
+
   /// =========================
   /// DROPDOWN APIs
   /// =========================
