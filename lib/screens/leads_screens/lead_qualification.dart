@@ -191,17 +191,7 @@ class _LeadQualificationScreenState extends State<LeadQualificationScreen> {
 
               // Table
               Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
+
                 child: Column(
                   children: [
                     // Table header
@@ -424,7 +414,7 @@ class _LeadQualificationScreenState extends State<LeadQualificationScreen> {
                     color: const Color(0xFF00897B),
                   ),
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: isSmallScreen ? 4 : 6),
                 Expanded(
                   child: Text(
                     item.name,
@@ -440,50 +430,63 @@ class _LeadQualificationScreenState extends State<LeadQualificationScreen> {
             ),
           ),
 
-          // Category badge
           Expanded(
             flex: 2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              decoration: BoxDecoration(
-                color: item.categoryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                item.category,
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 9.5 : 10.5,
-                  color: item.categoryColor,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.3,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: item.categoryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    item.category,
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 9.5 : 10.5,
+                      color: item.categoryColor,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
 
           // Action buttons
           SizedBox(
-            width: isSmallScreen ? 70 : 74,
+            width: isSmallScreen ? 60 : 74,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.edit_outlined),
-                  color: const Color(0xFFFF9800),
-                  iconSize: isSmallScreen ? 18 : 20,
-                  padding: const EdgeInsets.all(4),
-                  constraints: const BoxConstraints(),
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.delete_outline),
-                  color: const Color(0xFFE53935),
-                  iconSize: isSmallScreen ? 18 : 20,
-                  padding: const EdgeInsets.all(4),
-                  constraints: const BoxConstraints(),
-                ),
+                SizedBox(
+                  width: isSmallScreen ? 60 : 74,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      GestureDetector(
+                        onTap: () {},
+                        child: Icon(
+                          Icons.edit_outlined,
+                          color: const Color(0xFFFF9800),
+                          size: isSmallScreen ? 18 : 20,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: () {},
+                        child: Icon(
+                          Icons.delete_outline,
+                          color: const Color(0xFFE53935),
+                          size: isSmallScreen ? 18 : 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
               ],
             ),
           ),
