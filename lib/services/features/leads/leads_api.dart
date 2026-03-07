@@ -514,6 +514,73 @@ class LeadsApi {
   }
 
   /// =========================
+  /// LEAD CONFIG APIs
+  /// =========================
+
+  /// Get lead table configuration
+  Future<Map<String, dynamic>> getLeadConfig() async {
+    final response = await _client.get('/lead-config/');
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      throw Exception("Unexpected lead config format");
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Failed to load lead config: ${response.statusCode}");
+  }
+
+  /// Update full lead configuration
+  Future<Map<String, dynamic>> updateLeadConfig(
+      Map<String, dynamic> payload) async {
+    final response = await _client.put('/lead-config/', payload);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Update lead config failed: ${response.statusCode}");
+  }
+
+  /// Partial update
+  Future<Map<String, dynamic>> patchLeadConfig(
+      Map<String, dynamic> payload) async {
+    final response = await _client.patch('/lead-config/', payload);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Patch lead config failed: ${response.statusCode}");
+  }
+
+  /// =========================
   /// DROPDOWN APIs
   /// =========================
 

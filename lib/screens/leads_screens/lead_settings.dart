@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../layouts/main_layout.dart';
+import 'package:ica_crm/services/features/leads/leads_api.dart';
 
 class LeadsSettingsScreen extends StatefulWidget {
   const LeadsSettingsScreen({super.key});
@@ -9,6 +10,81 @@ class LeadsSettingsScreen extends StatefulWidget {
 }
 
 class _LeadsSettingsScreenState extends State<LeadsSettingsScreen> {
+
+  final LeadsApi _leadsApi = LeadsApi();
+  String whatsappTemplate = "";
+  final TextEditingController _whatsappController = TextEditingController();
+  final TextEditingController _leadsPerPageController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _whatsappController.text = whatsappTemplate;
+    _leadsPerPageController.text = leadsPerPage.toString();
+    loadLeadConfig();
+  }
+
+  @override
+  void dispose() {
+    _whatsappController.dispose();
+    _leadsPerPageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> loadLeadConfig() async {
+    try {
+      final data = await _leadsApi.getLeadConfig();
+
+      if (!mounted) return;
+
+      setState(() {
+        columnVisibility['Full Name'] = data['show_full_name'] ?? true;
+        columnVisibility['Email Address'] = data['show_email'] ?? false;
+        columnVisibility['Phone Number'] = data['show_phone'] ?? true;
+        columnVisibility['Country / Region'] = data['show_country'] ?? true;
+        columnVisibility['Qualification'] = data['show_qualification'] ?? false;
+        columnVisibility['Lead Source'] = data['show_source'] ?? true;
+        columnVisibility['Enrolled Course'] = data['show_course'] ?? false;
+        columnVisibility['Lead Status'] = data['show_status'] ?? false;
+        columnVisibility['Assigned Agent'] = data['show_assigned_to'] ?? true;
+        columnVisibility['Source Form'] = data['show_form'] ?? false;
+        columnVisibility['Follow Up Date'] = data['show_follow_up'] ?? false;
+        columnVisibility['Creation Date'] = data['show_created_at'] ?? true;
+        columnVisibility['Last Activity'] = data['show_updated_at'] ?? false;
+        columnVisibility["Doctor's Note"] = data['show_doctors_note'] ?? false;
+        columnVisibility['Internal Notes'] = data['show_notes'] ?? false;
+        leadsPerPage = int.tryParse(data['lead_length']?.toString() ?? "50") ?? 50;
+        whatsappTemplate = data['wa_default'] ?? "Hi, thank you for your inquiry!";
+        _whatsappController.text = whatsappTemplate;
+        _leadsPerPageController.text = leadsPerPage.toString();
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  Map<String, dynamic> buildPayload() {
+    return {
+      "show_full_name": columnVisibility['Full Name'] ?? false,
+      "show_email": columnVisibility['Email Address'] ?? false,
+      "show_phone": columnVisibility['Phone Number'] ?? false,
+      "show_country": columnVisibility['Country / Region'] ?? false,
+      "show_qualification": columnVisibility['Qualification'] ?? false,
+      "show_source": columnVisibility['Lead Source'] ?? false,
+      "show_course": columnVisibility['Enrolled Course'] ?? false,
+      "show_status": columnVisibility['Lead Status'] ?? false,
+      "show_assigned_to": columnVisibility['Assigned Agent'] ?? false,
+      "show_form": columnVisibility['Source Form'] ?? false,
+      "show_follow_up": columnVisibility['Follow Up Date'] ?? false,
+      "show_created_at": columnVisibility['Creation Date'] ?? false,
+      "show_updated_at": columnVisibility['Last Activity'] ?? false,
+      "show_doctors_note": columnVisibility["Doctor's Note"] ?? false,
+      "show_notes": columnVisibility['Internal Notes'] ?? false,
+      // Required backend fields
+      "lead_length": leadsPerPage.toString(),
+      "wa_default": whatsappTemplate,
+    };
+  }
   // Track visibility state for each column
   Map<String, bool> columnVisibility = {
     'Full Name': true,
@@ -163,7 +239,21 @@ class _LeadsSettingsScreenState extends State<LeadsSettingsScreen> {
                 ),
                 if (!isSmallScreen)
                   ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () async {
+                      try {
+                        await _leadsApi.updateLeadConfig(buildPayload());
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Lead configuration saved"),
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(e.toString())));
+                      }
+                    },
                     icon: const Icon(Icons.save_outlined, size: 18),
                     label: const Text('Save Changes'),
                     style: ElevatedButton.styleFrom(
@@ -242,7 +332,19 @@ class _LeadsSettingsScreenState extends State<LeadsSettingsScreen> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () async {
+                    try {
+                      await _leadsApi.updateLeadConfig(buildPayload());
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Lead configuration saved")),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    }
+                  },
                   icon: const Icon(Icons.save_outlined, size: 18),
                   label: const Text('Save Changes'),
                   style: ElevatedButton.styleFrom(
@@ -423,14 +525,18 @@ class _LeadsSettingsScreenState extends State<LeadsSettingsScreen> {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
-                          'Hi, thank you for your inquiry!',
-                          style: TextStyle(
-                            fontSize: isSmallScreen ? 13 : 14,
-                            color: const Color(0xFF1A1A1A),
+                        child: TextField(
+                          controller: _whatsappController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: "Enter WhatsApp template",
                           ),
+                          onChanged: (value) {
+                            whatsappTemplate = value;
+                          },
                         ),
-                      ),
+                      )
                     ],
                   ),
                 ),
@@ -605,14 +711,20 @@ class _LeadsSettingsScreenState extends State<LeadsSettingsScreen> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: const Color(0xFF333333)),
           ),
-          child: Text(
-            value.toString(),
-            style: TextStyle(
-              fontSize: isSmallScreen ? 15 : 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+            child: TextField(
+              keyboardType: TextInputType.number,
+              controller: _leadsPerPageController,
+              onChanged: (v) {
+                leadsPerPage = int.tryParse(v) ?? 50;
+              },
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+              ),
             ),
-          ),
         ),
       ],
     );
