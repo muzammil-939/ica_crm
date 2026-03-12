@@ -581,6 +581,99 @@ class LeadsApi {
   }
 
   /// =========================
+  /// LEAD QUALIFICATIONS APIs
+  /// =========================
+
+  Future<Map<String, dynamic>> getLeadQualifications({String? url}) async {
+    final endpoint =
+    url != null && url.startsWith('http')
+        ? url
+        : (url ?? '/lead-qualifications/');
+
+    final response = await _client.get(endpoint);
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+
+      // Paginated response
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      // Non-paginated list
+      if (decoded is List) {
+        return {
+          "results": decoded,
+          "next": null,
+        };
+      }
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Failed to load lead qualifications");
+  }
+
+  /// CREATE LEAD QUALIFICATION
+  Future<Map<String, dynamic>> createLeadQualification(
+      Map<String, dynamic> payload) async {
+    final response = await _client.post('/lead-qualifications/', payload);
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Create lead qualification failed: ${response.statusCode}");
+  }
+
+  /// UPDATE LEAD QUALIFICATION
+  Future<Map<String, dynamic>> updateLeadQualification(
+      int id, Map<String, dynamic> payload) async {
+    final response = await _client.put('/lead-qualifications/$id/', payload);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Update lead qualification failed: ${response.statusCode}");
+  }
+
+  /// DELETE LEAD QUALIFICATION
+  Future<void> deleteLeadQualification(int id) async {
+    final response = await _client.delete('/lead-qualifications/$id/');
+
+    if (response.statusCode == 204) {
+      return;
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Delete lead qualification failed: ${response.statusCode}");
+  }
+
+  /// =========================
   /// DROPDOWN APIs
   /// =========================
 
