@@ -674,6 +674,146 @@ class LeadsApi {
   }
 
   /// =========================
+  /// GET ADMISSIONS (Paginated)
+  /// =========================
+  Future<Map<String, dynamic>> getAdmissions({String? url}) async {
+    final endpoint =
+    url != null && url.startsWith('http') ? url : (url ?? '/admissions/');
+
+    final response = await _client.get(endpoint);
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+
+      // Paginated response
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      // Non paginated fallback
+      if (decoded is List) {
+        return {
+          "results": decoded,
+          "next": null,
+        };
+      }
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Failed to load admissions");
+  }
+
+  /// =========================
+  /// GET SINGLE ADMISSION
+  /// =========================
+  Future<Map<String, dynamic>> getAdmission(int id) async {
+    final response = await _client.get('/admissions/$id/');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 404) {
+      throw Exception("Admission not found");
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Failed to load admission");
+  }
+
+  /// =========================
+  /// CREATE ADMISSION
+  /// =========================
+  Future<Map<String, dynamic>> createAdmission(
+      Map<String, dynamic> payload) async {
+    final response = await _client.post('/admissions/', payload);
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Create admission failed: ${response.statusCode}");
+  }
+
+  /// =========================
+  /// UPDATE ADMISSION (PUT)
+  /// =========================
+  Future<Map<String, dynamic>> updateAdmission(
+      int id, Map<String, dynamic> payload) async {
+    final response = await _client.put('/admissions/$id/', payload);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Update admission failed: ${response.statusCode}");
+  }
+
+  /// =========================
+  /// PARTIAL UPDATE ADMISSION
+  /// =========================
+  Future<Map<String, dynamic>> patchAdmission(
+      int id, Map<String, dynamic> payload) async {
+    final response = await _client.patch('/admissions/$id/', payload);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception(error.toString());
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Patch admission failed: ${response.statusCode}");
+  }
+
+  /// =========================
+  /// DELETE ADMISSION
+  /// =========================
+  Future<void> deleteAdmission(int id) async {
+    final response = await _client.delete('/admissions/$id/');
+
+    if (response.statusCode == 204) {
+      return;
+    }
+
+    if (response.statusCode == 401) {
+      throw Exception("Unauthorized. Please login again.");
+    }
+
+    throw Exception("Delete admission failed: ${response.statusCode}");
+  }
+
+  /// =========================
   /// DROPDOWN APIs
   /// =========================
 

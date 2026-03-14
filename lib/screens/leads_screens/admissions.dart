@@ -1,24 +1,63 @@
 import 'package:flutter/material.dart';
 import '../../layouts/main_layout.dart';
+import 'package:ica_crm/services/features/leads/leads_api.dart';
 
 class AdmissionsScreen extends StatelessWidget {
   const AdmissionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MainLayout(title: 'Admissions', child: AdmissionsContent());
+    return const MainLayout(
+      title: 'Admissions',
+      child: AdmissionsContent(),
+    );
   }
 }
 
-class AdmissionsContent extends StatelessWidget {
+class AdmissionsContent extends StatefulWidget {
   const AdmissionsContent({super.key});
+
+  @override
+  State<AdmissionsContent> createState() => _AdmissionsContentState();
+}
+
+class _AdmissionsContentState extends State<AdmissionsContent> {
+
+  final LeadsApi _api = LeadsApi(); // because admissions APIs are inside LeadsApi
+
+  List admissions = [];
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchAdmissions();
+  }
+
+  Future<void> fetchAdmissions() async {
+    try {
+      final data = await _api.getAdmissions();
+
+      setState(() {
+        admissions = data['results'] ?? [];
+        loading = false;
+      });
+
+    } catch (e) {
+      setState(() {
+        loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isSmallScreen = size.width < 360;
     final isTablet = size.width > 600;
-
+    if (loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
@@ -53,7 +92,6 @@ class AdmissionsContent extends StatelessWidget {
             _buildSearchBar(context, isSmallScreen),
 
             SizedBox(height: isSmallScreen ? 16 : 20),
-
             // Data Table
             _buildDataTable(context, isSmallScreen, isTablet),
           ],
@@ -432,43 +470,71 @@ class AdmissionsContent extends StatelessWidget {
             ),
 
           const Divider(height: 1),
-
+          if (admissions.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(40),
+              child: Center(
+                child: Text(
+                  "No admissions found",
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
           // Table Rows
-          _StudentRow(
-            sno: '1',
-            leadId: 'lead-4',
-            name: 'Dr. Rajesh Kumar',
-            designation: 'CLINICAL ASPIRANT',
-            progress: 0.24,
-            status: 'PARTIALLY P',
-            statusColor: const Color(0xFFFF9800),
-            statusBgColor: const Color(0xFFFFF3E0),
-            isSmallScreen: isSmallScreen,
-          ),
-          const Divider(height: 1),
-          _StudentRow(
-            sno: '2',
-            leadId: 'lead-5',
-            name: 'Dr. Sneha Reddy',
-            designation: 'CLINICAL ASPIRANT',
-            progress: 1.0,
-            status: 'FULLY PAID',
-            statusColor: const Color(0xFF4CAF50),
-            statusBgColor: const Color(0xFFE8F5E9),
-            isSmallScreen: isSmallScreen,
-          ),
-          const Divider(height: 1),
-          _StudentRow(
-            sno: '3',
-            leadId: 'lead-ol-1',
-            name: 'Dr. Amit Verma',
-            designation: 'CLINICAL ASPIRANT',
-            progress: 0.0,
-            status: 'PAYMENT DU',
-            statusColor: const Color(0xFFD32F2F),
-            statusBgColor: const Color(0xFFFFEBEE),
-            isSmallScreen: isSmallScreen,
-          ),
+          ...List.generate(admissions.length, (index) {
+
+            final admission = admissions[index];
+
+            final courseFee =
+                double.tryParse(admission['course_fee'].toString()) ?? 0;
+
+            final collected =
+                double.tryParse(admission['amount_collected'].toString()) ?? 0;
+
+            final progressRaw = courseFee == 0 ? 0 : collected / courseFee;
+            final double progress = progressRaw.clamp(0.0, 1.0).toDouble();
+
+            String status;
+            Color statusColor;
+            Color statusBg;
+
+            if (progress >= 1) {
+              status = "FULLY PAID";
+              statusColor = const Color(0xFF4CAF50);
+              statusBg = const Color(0xFFE8F5E9);
+            } else if (progress > 0) {
+              status = "PARTIALLY PAID";
+              statusColor = const Color(0xFFFF9800);
+              statusBg = const Color(0xFFFFF3E0);
+            } else {
+              status = "PAYMENT DUE";
+              statusColor = const Color(0xFFD32F2F);
+              statusBg = const Color(0xFFFFEBEE);
+            }
+
+            return Column(
+              children: [
+
+                _StudentRow(
+                  sno: '${index + 1}',
+                  leadId: "lead-${admission['lead']}",
+                  name: admission['lead_name'] ?? "Lead ${admission['lead']}",
+                  designation: "CLINICAL ASPIRANT",
+                  progress: progress,
+                  status: status,
+                  statusColor: statusColor,
+                  statusBgColor: statusBg,
+                  isSmallScreen: MediaQuery.of(context).size.width < 360,
+                ),
+
+                const Divider(height: 1),
+
+              ],
+            );
+          }),
 
           const Divider(height: 1),
 
